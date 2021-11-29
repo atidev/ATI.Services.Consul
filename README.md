@@ -17,3 +17,31 @@
 Здесь лучше воспользоваться интерфейсом гитхаба, там удобнее редакитровать текст.
 6. Срабатывает релизный workflow билдит и пушит в нугет релизную версию.
 7. В разделе [Releses](https://github.com/atidev/ATI.Services.Consul/releases) появляется информация о нашем релиз и release notes.
+
+## Документация
+
+### Consul
+Чтобы зарегистрировать сервис в консуле нужно:
+`в appsettings.json` поместить блок 
+```json
+ "ConsulRegistratorOptions": {
+    "ProvideEnvironment": "env",
+    "ConsulServiceOptions": [
+      {
+        "ServiceName": "your-service-name",
+        "Tags": ["env"],
+        "Check": {
+          "HTTP": "/api/health/service",
+          "DeregisterCriticalServiceAfter": "00:00:05",
+          "Interval": "00:00:05",
+          "Timeout": "00:00:02"
+        }
+      }
+    ]
+ }
+```
+> Да, там массив. Да, можно зарегать один сервак под разными тегами, именами, всем. 
+> Это необходимо в сервиса [нотификаций](http://stash.ri.domain:7990/projects/AS/repos/ati.notifications.core/browse/ATI.Notifications.Core.API/appsettings.json), для версионирования старых мобильных приложений, которые ходят без прокси и не выживают после смены контрактов.
+
+Далее осталось только добавить в `Startup.cs` `services.AddConsul()`
+
