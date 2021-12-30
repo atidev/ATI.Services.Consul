@@ -8,6 +8,7 @@ using ATI.Services.Common.Metrics;
 using ATI.Services.Common.Options;
 using ATI.Services.Common.Tracing;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using NLog;
 
@@ -23,6 +24,7 @@ namespace ATI.Services.Consul
         private readonly MetricsTracingFactory _metricsTracingFactory;
         private readonly ConsulServiceAddress _serviceAddress;
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
+        private readonly HttpContext _context = new DefaultHttpContext();
 
         public ConsulMetricsHttpClientWrapper(
             BaseServiceOptions serviceOptions,
@@ -203,7 +205,7 @@ namespace ATI.Services.Consul
             params object[] errorLogObjects)
         {
             using (_metricsTracingFactory.CreateLoggingMetricsTimer(metricName,
-                $"{HttpMethod.Delete}:{urlTemplate ?? url}", additionalLabels))
+                $"{_context.Request.Method}:{urlTemplate ?? url}", additionalLabels))
             {
                 try
                 {
@@ -228,7 +230,7 @@ namespace ATI.Services.Consul
             params object[] errorLogObjects)
         {
             using (_metricsTracingFactory.CreateLoggingMetricsTimer(metricName,
-                $"{HttpMethod.Delete}:{urlTemplate ?? url}", additionalLabels))
+                $"{_context.Request.Method}:{urlTemplate ?? url}", additionalLabels))
             {
                 try
                 {
