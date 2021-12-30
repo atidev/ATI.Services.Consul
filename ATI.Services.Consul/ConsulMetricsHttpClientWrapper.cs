@@ -24,13 +24,14 @@ namespace ATI.Services.Consul
         private readonly MetricsTracingFactory _metricsTracingFactory;
         private readonly ConsulServiceAddress _serviceAddress;
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
-        private readonly HttpContext _context = new DefaultHttpContext();
+        private readonly HttpContext _context;
 
         public ConsulMetricsHttpClientWrapper(
             BaseServiceOptions serviceOptions,
             string adapterName,
             JsonSerializer serializer = null)
         {
+            _context = new DefaultHttpContext();
             _metricsTracingFactory = MetricsTracingFactory.CreateHttpClientMetricsFactory(adapterName,
                 serviceOptions.ConsulName, serviceOptions.LongRequestTime);
 
