@@ -24,14 +24,12 @@ namespace ATI.Services.Consul
         private readonly MetricsTracingFactory _metricsTracingFactory;
         private readonly ConsulServiceAddress _serviceAddress;
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
-        private readonly HttpContext _context;
 
         public ConsulMetricsHttpClientWrapper(
             BaseServiceOptions serviceOptions,
             string adapterName,
             JsonSerializer serializer = null)
         {
-            _context = new DefaultHttpContext();
             _metricsTracingFactory = MetricsTracingFactory.CreateHttpClientMetricsFactory(adapterName,
                 serviceOptions.ConsulName, serviceOptions.LongRequestTime);
 
@@ -206,7 +204,7 @@ namespace ATI.Services.Consul
             params object[] errorLogObjects)
         {
             using (_metricsTracingFactory.CreateLoggingMetricsTimer(metricName,
-                $"{_context.Request.Method}:{urlTemplate ?? url}", additionalLabels))
+                $"{new HttpContextAccessor().HttpContext.Request.Method}:{urlTemplate ?? url}", additionalLabels))
             {
                 try
                 {
@@ -231,7 +229,7 @@ namespace ATI.Services.Consul
             params object[] errorLogObjects)
         {
             using (_metricsTracingFactory.CreateLoggingMetricsTimer(metricName,
-                $"{_context.Request.Method}:{urlTemplate ?? url}", additionalLabels))
+                $"{new HttpContextAccessor().HttpContext.Request.Method}:{urlTemplate ?? url}", additionalLabels))
             {
                 try
                 {
