@@ -215,7 +215,7 @@ namespace ATI.Services.Consul
                 catch (Exception e)
                 {
                     _logger.ErrorWithObject(e, errorLogObjects);
-                    return await Task.FromResult(new OperationResult<T>(ActionStatus.InternalServerError));
+                    return new OperationResult<T>(ActionStatus.InternalServerError);
                 }
             }
         }
@@ -241,7 +241,7 @@ namespace ATI.Services.Consul
                 catch (Exception e)
                 {
                     _logger.ErrorWithObject(e, new {body, additionalLabels});
-                    return await Task.FromResult(new OperationResult<T>(ActionStatus.InternalServerError));
+                    return new OperationResult<T>(ActionStatus.InternalServerError);
                 }
             }
         }
