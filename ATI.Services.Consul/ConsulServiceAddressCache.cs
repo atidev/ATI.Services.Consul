@@ -27,22 +27,22 @@ namespace ATI.Services.Consul
                 return;
 
             _cachedServices = new();
-            _reloadCacheTask = GetServiceFromConsul();
+            _reloadCacheTask = GetServiceFromConsulAsync();
         }
         
         public async Task<List<ServiceEntry>> GetCachedObjectsAsync()
         {
-            await CheckCacheWasInitialized();
-            return _cachedServices ?? await GetServiceFromConsul();
+            await CheckCacheWasInitializedAsync();
+            return _cachedServices ?? await GetServiceFromConsulAsync();
         }
 
         public void ReloadCache()
         {
             if (_reloadCacheTask is {IsCompleted:true} or {IsCompletedSuccessfully:true})
-                _reloadCacheTask = GetServiceFromConsul();
+                _reloadCacheTask = GetServiceFromConsulAsync();
         }
 
-        private async Task CheckCacheWasInitialized()
+        private async Task CheckCacheWasInitializedAsync()
         {
             if (!_useCaching)
                 return;
@@ -53,7 +53,7 @@ namespace ATI.Services.Consul
             _cachedServices = await _reloadCacheTask;
         }
 
-        private async Task<List<ServiceEntry>> GetServiceFromConsul()
+        private async Task<List<ServiceEntry>> GetServiceFromConsulAsync()
         {
             try
             {
