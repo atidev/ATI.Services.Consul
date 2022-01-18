@@ -27,13 +27,13 @@ namespace ATI.Services.Consul
         public ConsulMetricsHttpClientWrapper(
             BaseServiceOptions serviceOptions,
             string adapterName,
+            ConsulServiceAddress consulServiceAddress,
             JsonSerializer serializer = null)
         {
             _metricsTracingFactory = MetricsTracingFactory.CreateHttpClientMetricsFactory(adapterName,
                 serviceOptions.ConsulName, serviceOptions.LongRequestTime);
 
-            _serviceAddress =
-                new ConsulServiceAddress(serviceOptions.ConsulName, serviceOptions.Environment);
+            _serviceAddress = consulServiceAddress;
 
             var config = new TracedHttpClientConfig
             {

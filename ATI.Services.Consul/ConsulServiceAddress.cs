@@ -5,13 +5,14 @@ using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using ATI.Services.Common.Extensions;
+using ATI.Services.Common.Initializers.Interfaces;
 using Consul;
 using NLog;
 
 
 namespace ATI.Services.Consul
 {
-    public class ConsulServiceAddress : IDisposable
+    public class ConsulServiceAddress : IDisposable, IInitializer
     {
         private readonly string _environment;
         private readonly string _serviceName;
@@ -30,8 +31,6 @@ namespace ATI.Services.Consul
             _useCaching = useCaching;
             _environment = environment;
             _serviceName = serviceName;
-
-            ReloadCache().GetAwaiter().GetResult();
 
             if (_useCaching)
                 _updateCacheTimer = new Timer(async _ => await ReloadCache(), null, timeToReload.Value,
@@ -98,10 +97,14 @@ namespace ATI.Services.Consul
             return new List<ServiceEntry>();
         }
 
-
         public void Dispose()
         {
             _updateCacheTimer.Dispose();
+        }
+
+        public Task InitializeAsync()
+        {
+            return ReloadCache();
         }
     }
 }
