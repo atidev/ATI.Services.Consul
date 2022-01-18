@@ -27,13 +27,12 @@ namespace ATI.Services.Consul
         public ConsulMetricsHttpClientWrapper(
             BaseServiceOptions serviceOptions,
             string adapterName,
-            ConsulServiceAddress consulServiceAddress,
             JsonSerializer serializer = null)
         {
             _metricsTracingFactory = MetricsTracingFactory.CreateHttpClientMetricsFactory(adapterName,
                 serviceOptions.ConsulName, serviceOptions.LongRequestTime);
 
-            _serviceAddress = consulServiceAddress;
+            _serviceAddress = new ConsulServiceAddress(serviceOptions.ConsulName, serviceOptions.Environment);
 
             var config = new TracedHttpClientConfig
             {
@@ -194,7 +193,7 @@ namespace ATI.Services.Consul
 
         #endregion
 
-        private Task<OperationResult<T>> SendAsync<T>(string url,
+        private async Task<OperationResult<T>> SendAsync<T>(string url,
             string urlTemplate,
             string metricName,
             Dictionary<string, string> headers,
@@ -207,18 +206,18 @@ namespace ATI.Services.Consul
             {
                 try
                 {
-                    var serviceAddress = _serviceAddress.ToHttp();
-                    return methodExecuteFunc(serviceAddress);
+                    var serviceAddress = await _serviceAddress.ToHttp();
+                    return await methodExecuteFunc(serviceAddress);
                 }
                 catch (Exception e)
                 {
                     _logger.ErrorWithObject(e, errorLogObjects);
-                    return Task.FromResult(new OperationResult<T>(ActionStatus.InternalServerError));
+                    return new OperationResult<T>(ActionStatus.InternalServerError);
                 }
             }
         }
 
-        private Task<OperationResult<T>> SendAsync<T, TBody>(string url,
+        private async Task<OperationResult<T>> SendAsync<T, TBody>(string url,
             string urlTemplate,
             string metricName,
             Dictionary<string, string> headers,
@@ -232,13 +231,13 @@ namespace ATI.Services.Consul
             {
                 try
                 {
-                    var serviceAddress = _serviceAddress.ToHttp();
-                    return methodExecuteFunc(serviceAddress);
+                    var serviceAddress = await _serviceAddress.ToHttp();
+                    return await methodExecuteFunc(serviceAddress);
                 }
                 catch (Exception e)
                 {
                     _logger.ErrorWithObject(e, new {body, additionalLabels});
-                    return Task.FromResult(new OperationResult<T>(ActionStatus.InternalServerError));
+                    return new OperationResult<T>(ActionStatus.InternalServerError);
                 }
             }
         }
