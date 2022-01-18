@@ -234,7 +234,7 @@ namespace ATI.Services.Consul
             {
                 try
                 {
-                    var serviceAddress = _serviceAddress.ToHttp();
+                    var serviceAddress = await _serviceAddress.ToHttp();
                     return await methodExecuteFunc(serviceAddress);
                 }
                 catch (Exception e)
