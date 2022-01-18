@@ -208,7 +208,7 @@ namespace ATI.Services.Consul
             {
                 try
                 {
-                    var serviceAddress = await _serviceAddress.ToHttp();
+                    var serviceAddress = await _serviceAddress.ToHttpAsync();
                     return await methodExecuteFunc(serviceAddress);
                 }
                 catch (Exception e)
@@ -234,7 +234,7 @@ namespace ATI.Services.Consul
             {
                 try
                 {
-                    var serviceAddress = await _serviceAddress.ToHttp();
+                    var serviceAddress = await _serviceAddress.ToHttpAsync();
                     return await methodExecuteFunc(serviceAddress);
                 }
                 catch (Exception e)

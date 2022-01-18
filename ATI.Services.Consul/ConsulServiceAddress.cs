@@ -1,7 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
 using System.Threading;
 using System.Threading.Tasks;
 using ATI.Services.Common.Extensions;
@@ -21,7 +19,7 @@ namespace ATI.Services.Consul
 
         public ConsulServiceAddress(string serviceName, string environment, TimeSpan? timeToReload = null, bool useCaching = true)
         {
-            timeToReload ??= TimeSpan.FromSeconds(60);
+            timeToReload ??= TimeSpan.FromSeconds(5);
             _environment = environment;
             _serviceName = serviceName;
 
@@ -31,12 +29,12 @@ namespace ATI.Services.Consul
                 timeToReload.Value);
         }
 
-        public async Task<List<ServiceEntry>> GetAll()
+        public async Task<List<ServiceEntry>> GetAllAsync()
         {
             return await CachedServices.GetCachedObjectsAsync();
         }
 
-        public async Task<string> ToHttp()
+        public async Task<string> ToHttpAsync()
         {
             var serviceInfo = (await CachedServices.GetCachedObjectsAsync()).RandomItem();
             var address = string.IsNullOrWhiteSpace(serviceInfo?.Service?.Address)
@@ -52,7 +50,7 @@ namespace ATI.Services.Consul
             return $"http://{address}:{serviceInfo.Service.Port}";
         }
 
-        public async Task<(string, int)> GetAddressAndPort()
+        public async Task<(string, int)> GetAddressAndPortAsync()
         {
             var serviceInfo = (await CachedServices.GetCachedObjectsAsync()).RandomItem();
             var address = string.IsNullOrWhiteSpace(serviceInfo?.Service?.Address)
@@ -67,74 +65,32 @@ namespace ATI.Services.Consul
 
             return (address, serviceInfo.Service.Port);
         }
+
+        #region Obsolete
+        
+        [Obsolete("Method GetAll is deprecated, pls use GetAllAsync instead")]
+        public List<ServiceEntry> GetAll()
+        {
+            return GetAllAsync().GetAwaiter().GetResult();
+        }
+        
+        [Obsolete("Method ToHttp is deprecated, pls use ToHttpAsync instead")]
+        public string ToHttp()
+        {
+            return ToHttpAsync().GetAwaiter().GetResult();
+        }
+        
+        [Obsolete("Method GetAddressAndPort is deprecated, pls use GetAddressAndPortAsync instead")]
+        public (string, int) GetAddressAndPort()
+        {
+            return GetAddressAndPortAsync().GetAwaiter().GetResult();
+        }
+
+        #endregion
         
         public void Dispose()
         {
             _updateCacheTimer.Dispose();
-        }
-    }
-
-    public class ConsulServiceAddressCache
-    {
-        private Task<List<ServiceEntry>> _reloadCacheTask;
-        private List<ServiceEntry> _cachedServices;
-        private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
-        private readonly bool _useCaching;
-        private readonly string _serviceName;
-        private readonly string _environment;
-
-        public ConsulServiceAddressCache(bool useCaching, string serviceName, string environment)
-        {
-            _useCaching = useCaching;
-            _serviceName = serviceName;
-            _environment = environment;
-            
-            if (!_useCaching)
-                return;
-
-            _cachedServices = new();
-            _reloadCacheTask = GetServiceFromConsul();
-        }
-        
-        public async Task<List<ServiceEntry>> GetCachedObjectsAsync()
-        {
-            await CheckCacheWasInitialized();
-            return _cachedServices ?? await GetServiceFromConsul();
-        }
-
-        public void ReloadCache()
-        {
-            if (_reloadCacheTask is {IsCompleted:true} or {IsCompletedSuccessfully:true})
-                _reloadCacheTask = GetServiceFromConsul();
-        }
-
-        private async Task CheckCacheWasInitialized()
-        {
-            if (!_useCaching)
-                return;
-
-            if (_reloadCacheTask.IsCompleted || _reloadCacheTask.IsCompletedSuccessfully)
-                return;
-
-            _cachedServices = await _reloadCacheTask;
-        }
-
-        private async Task<List<ServiceEntry>> GetServiceFromConsul()
-        {
-            try
-            {
-                using var cc = new ConsulClient();
-                var fromConsul = await cc.Health.Service(_serviceName, _environment, true);
-                if (fromConsul.StatusCode == HttpStatusCode.OK && fromConsul.Response.Length > 0)
-                {
-                    return fromConsul.Response.ToList();
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.Error(e);
-            }
-            return new List<ServiceEntry>();
         }
     }
 }
