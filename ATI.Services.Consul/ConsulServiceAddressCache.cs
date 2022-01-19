@@ -8,6 +8,9 @@ using NLog;
 
 namespace ATI.Services.Consul
 {
+    /// <summary>
+    /// Обеспечивает получение доступных сервисов от консула и их кеширование (опционально)
+    /// </summary>
     public class ConsulServiceAddressCache
     {
         private Task<List<ServiceEntry>> _reloadCacheTask;
@@ -30,18 +33,31 @@ namespace ATI.Services.Consul
             _reloadCacheTask = GetServiceFromConsulAsync();
         }
         
+        /// <summary>
+        /// Возвращает коллекцию сервисов 
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<ServiceEntry>> GetCachedObjectsAsync()
         {
             await CheckCacheWasInitializedAsync();
             return _cachedServices ?? await GetServiceFromConsulAsync();
         }
 
+        /// <summary>
+        /// Запускает таску на обновление кеша, если кеширование включено
+        /// </summary>
         public void ReloadCache()
         {
+            if (!_useCaching)
+                return;
+            
             if (_reloadCacheTask is {IsCompleted:true} or {IsCompletedSuccessfully:true})
                 _reloadCacheTask = GetServiceFromConsulAsync();
         }
 
+        /// <summary>
+        /// Проверяем завершилось ли сохранение доступных сервисов в кеш
+        /// </summary>
         private async Task CheckCacheWasInitializedAsync()
         {
             if (!_useCaching)
@@ -53,6 +69,10 @@ namespace ATI.Services.Consul
             _cachedServices = await _reloadCacheTask;
         }
 
+        /// <summary>
+        /// Возвращает список живых сервисов
+        /// </summary>
+        /// <returns></returns>
         private async Task<List<ServiceEntry>> GetServiceFromConsulAsync()
         {
             try
