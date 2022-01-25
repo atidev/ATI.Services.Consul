@@ -8,7 +8,6 @@ using ATI.Services.Common.Metrics;
 using ATI.Services.Common.Options;
 using ATI.Services.Common.Tracing;
 using JetBrains.Annotations;
-using Microsoft.AspNetCore.Http;
 using Newtonsoft.Json;
 using NLog;
 
@@ -209,7 +208,7 @@ namespace ATI.Services.Consul
             {
                 try
                 {
-                    var serviceAddress = _serviceAddress.ToHttp();
+                    var serviceAddress = await _serviceAddress.ToHttpAsync();
                     return await methodExecuteFunc(serviceAddress);
                 }
                 catch (Exception e)
@@ -235,7 +234,7 @@ namespace ATI.Services.Consul
             {
                 try
                 {
-                    var serviceAddress = _serviceAddress.ToHttp();
+                    var serviceAddress = await _serviceAddress.ToHttpAsync();
                     return await methodExecuteFunc(serviceAddress);
                 }
                 catch (Exception e)
