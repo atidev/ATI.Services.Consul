@@ -51,8 +51,10 @@ namespace ATI.Services.Consul
             if (!_useCaching)
                 return;
             
-            if (_reloadCacheTask is {IsCompleted:true} or {IsCompletedSuccessfully:true})
-                _reloadCacheTask = GetServiceFromConsulAsync();
+            if (!_reloadCacheTask.IsCompleted)
+                return;
+            
+            _reloadCacheTask = GetServiceFromConsulAsync();
         }
 
         /// <summary>
@@ -61,9 +63,6 @@ namespace ATI.Services.Consul
         private async Task CheckCacheWasInitializedAsync()
         {
             if (!_useCaching)
-                return;
-
-            if (_reloadCacheTask.IsCompleted || _reloadCacheTask.IsCompletedSuccessfully)
                 return;
 
             _cachedServices = await _reloadCacheTask;
