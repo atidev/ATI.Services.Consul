@@ -14,7 +14,6 @@ namespace ATI.Services.Consul
     public class ConsulServiceAddressCache
     {
         private Task<List<ServiceEntry>> _reloadCacheTask;
-        private List<ServiceEntry> _cachedServices;
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
         private readonly bool _useCaching;
         private readonly string _serviceName;
@@ -28,8 +27,7 @@ namespace ATI.Services.Consul
             
             if (!_useCaching)
                 return;
-
-            _cachedServices = new();
+            
             _reloadCacheTask = GetServiceFromConsulAsync();
         }
         
@@ -37,10 +35,9 @@ namespace ATI.Services.Consul
         /// Возвращает коллекцию сервисов 
         /// </summary>
         /// <returns></returns>
-        public async Task<List<ServiceEntry>> GetCachedObjectsAsync()
+        public Task<List<ServiceEntry>> GetCachedObjectsAsync()
         {
-            await CheckCacheWasInitializedAsync();
-            return _cachedServices ?? await GetServiceFromConsulAsync();
+            return _useCaching ? _reloadCacheTask : GetServiceFromConsulAsync();
         }
 
         /// <summary>
@@ -51,22 +48,10 @@ namespace ATI.Services.Consul
             if (!_useCaching)
                 return;
             
-            if (_reloadCacheTask is {IsCompleted:true} or {IsCompletedSuccessfully:true})
-                _reloadCacheTask = GetServiceFromConsulAsync();
-        }
-
-        /// <summary>
-        /// Проверяем завершилось ли сохранение доступных сервисов в кеш
-        /// </summary>
-        private async Task CheckCacheWasInitializedAsync()
-        {
-            if (!_useCaching)
+            if (!_reloadCacheTask.IsCompleted)
                 return;
-
-            if (_reloadCacheTask.IsCompleted || _reloadCacheTask.IsCompletedSuccessfully)
-                return;
-
-            _cachedServices = await _reloadCacheTask;
+            
+            _reloadCacheTask = GetServiceFromConsulAsync();
         }
 
         /// <summary>
