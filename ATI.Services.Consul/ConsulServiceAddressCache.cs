@@ -35,12 +35,9 @@ namespace ATI.Services.Consul
         /// Возвращает коллекцию сервисов 
         /// </summary>
         /// <returns></returns>
-        public async Task<List<ServiceEntry>> GetCachedObjectsAsync()
+        public Task<List<ServiceEntry>> GetCachedObjectsAsync()
         {
-            if(!_useCaching)
-                return await GetServiceFromConsulAsync();
-            
-            return await _reloadCacheTask;
+            return _useCaching ? _reloadCacheTask : GetServiceFromConsulAsync();
         }
 
         /// <summary>
