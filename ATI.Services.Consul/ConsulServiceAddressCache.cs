@@ -14,7 +14,6 @@ namespace ATI.Services.Consul
     public class ConsulServiceAddressCache
     {
         private Task<List<ServiceEntry>> _reloadCacheTask;
-        private List<ServiceEntry> _cachedServices;
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
         private readonly bool _useCaching;
         private readonly string _serviceName;
@@ -28,8 +27,7 @@ namespace ATI.Services.Consul
             
             if (!_useCaching)
                 return;
-
-            _cachedServices = new();
+            
             _reloadCacheTask = GetServiceFromConsulAsync();
         }
         
@@ -39,8 +37,10 @@ namespace ATI.Services.Consul
         /// <returns></returns>
         public async Task<List<ServiceEntry>> GetCachedObjectsAsync()
         {
-            await CheckCacheWasInitializedAsync();
-            return _cachedServices ?? await GetServiceFromConsulAsync();
+            if(!_useCaching)
+                return await GetServiceFromConsulAsync();
+            
+            return await _reloadCacheTask;
         }
 
         /// <summary>
@@ -55,17 +55,6 @@ namespace ATI.Services.Consul
                 return;
             
             _reloadCacheTask = GetServiceFromConsulAsync();
-        }
-
-        /// <summary>
-        /// Проверяем завершилось ли сохранение доступных сервисов в кеш
-        /// </summary>
-        private async Task CheckCacheWasInitializedAsync()
-        {
-            if (!_useCaching)
-                return;
-
-            _cachedServices = await _reloadCacheTask;
         }
 
         /// <summary>
