@@ -123,6 +123,27 @@ namespace ATI.Services.Consul
                 serviceAddress =>
                     _clientWrapper.PostAsync(serviceAddress, metricName, url, body, headers), HttpMethod.Post);
         }
+        
+        public Task<OperationResult<HttpContent>> PostAsync(string url,
+                                                            HttpContent body,
+                                                            string metricName,
+                                                            Dictionary<string, string> headers = null,
+                                                            string urlTemplate = null,
+                                                            string[] additionalLabels = null,
+                                                            params object[] additionalErrorLogObjects)
+        {
+            return SendAsync(url,
+                             urlTemplate,
+                             metricName,
+                             headers,
+                             additionalLabels,
+                             serviceAddress => _clientWrapper.PostAsync(serviceAddress,
+                                                                        metricName,
+                                                                        url,
+                                                                        body,
+                                                                        headers),
+                             HttpMethod.Post);
+        }
 
         #endregion
 
@@ -154,6 +175,27 @@ namespace ATI.Services.Consul
             return SendAsync(url, urlTemplate, metricName, headers, additionalLabels,
                 serviceAddress =>
                     _clientWrapper.PutAsync(serviceAddress, metricName, url, headers), HttpMethod.Put);
+        }
+
+        public Task<OperationResult<HttpContent>> PutAsync(string url,
+                                                           HttpContent body,
+                                                           string metricName,
+                                                           Dictionary<string, string> headers = null,
+                                                           string urlTemplate = null,
+                                                           string[] additionalLabels = null,
+                                                           params object[] additionalErrorLogObjects)
+        {
+            return SendAsync(url,
+                             urlTemplate,
+                             metricName,
+                             headers,
+                             additionalLabels,
+                             serviceAddress => _clientWrapper.PutAsync(serviceAddress,
+                                                                       metricName,
+                                                                       url,
+                                                                       body,
+                                                                       headers),
+                             HttpMethod.Put);
         }
 
         #endregion
@@ -190,6 +232,27 @@ namespace ATI.Services.Consul
             return SendAsync(url, urlTemplate, metricName, headers, additionalLabels,
                 serviceAddress =>
                     _clientWrapper.DeleteAsync(serviceAddress, metricName, url, headers), HttpMethod.Delete);
+        }
+
+        public Task<OperationResult<HttpContent>> DeleteAsync(string url,
+                                                              HttpContent body,
+                                                              string metricName,
+                                                              Dictionary<string, string> headers = null,
+                                                              string urlTemplate = null,
+                                                              string[] additionalLabels = null,
+                                                              params object[] additionalErrorLogObjects)
+        {
+            return SendAsync(url,
+                             urlTemplate,
+                             metricName,
+                             headers,
+                             additionalLabels,
+                             serviceAddress => _clientWrapper.DeleteAsync(serviceAddress,
+                                                                          metricName,
+                                                                          url,
+                                                                          body,
+                                                                          headers),
+                             HttpMethod.Delete);
         }
 
         #endregion
