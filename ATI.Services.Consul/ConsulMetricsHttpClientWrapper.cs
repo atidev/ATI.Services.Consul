@@ -214,6 +214,15 @@ namespace ATI.Services.Consul
                     _clientWrapper.PatchAsync<TResponse>(serviceAddress, metricName, url, headers), HttpMethod.Patch);
         }
 
+        public Task<OperationResult<string>> PatchAsync<TBody>(string url, TBody body, string metricName,
+            Dictionary<string, string> headers = null, string urlTemplate = null, string[] additionalLabels = null,
+            params object[] additionalErrorLogObjects)
+        {
+            return SendAsync(url, urlTemplate, metricName, headers, additionalLabels, body,
+                serviceAddress =>
+                    _clientWrapper.PatchAsync(serviceAddress, metricName, url, body, headers), HttpMethod.Patch);
+        }
+
         public Task<OperationResult<string>> PatchAsync(
             string url, string metricName, Dictionary<string, string> headers = null,
             string urlTemplate = null, string[] additionalLabels = null,
