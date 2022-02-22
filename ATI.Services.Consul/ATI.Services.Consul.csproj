@@ -18,7 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="atisu.services.common" Version="8.2.0-add-8-patch-metods-in-tracingwrapper" />
+    <PackageReference Include="atisu.services.common" Version="8.2.1" />
     <PackageReference Include="Consul" Version="0.7.2.6" />
   </ItemGroup>
 </Project>
