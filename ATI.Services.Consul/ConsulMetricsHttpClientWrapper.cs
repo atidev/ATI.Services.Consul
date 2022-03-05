@@ -38,7 +38,8 @@ namespace ATI.Services.Consul
             var config = new TracedHttpClientConfig
             {
                 ServiceName = serviceOptions.ConsulName,
-                Timeout = serviceOptions.TimeOut
+                Timeout = serviceOptions.TimeOut,
+                ProxyServiceVariablesHeaders = serviceOptions.ProxyServiceVariablesHeaders
             };
 
             if (serviceOptions.AdditionalHeaders != null)

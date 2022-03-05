@@ -43,7 +43,7 @@ namespace ATI.Services.Consul
 
             if (string.IsNullOrWhiteSpace(address) || serviceInfo.Service == null)
             {
-                _logger.Warn($"Не удалось взять настройки из консула для {_serviceName}:{_environment}");
+                _logger.Error($"Не удалось взять настройки из консула для {_serviceName}:{_environment}");
                 return null;
             }
 
@@ -59,7 +59,7 @@ namespace ATI.Services.Consul
 
             if (string.IsNullOrWhiteSpace(address) || serviceInfo.Service == null)
             {
-                _logger.Warn($"Не удалось взять настройки из консула для {_serviceName}:{_environment}");
+                _logger.Error($"Не удалось взять настройки из консула для {_serviceName}:{_environment}");
                 return default;
             }
 
