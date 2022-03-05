@@ -194,6 +194,47 @@ namespace ATI.Services.Consul
         }
 
         #endregion
+        
+        #region Patch
+
+        public Task<OperationResult<TResponse>> PatchAsync<TBody, TResponse>(string url, TBody body, string metricName,
+            Dictionary<string, string> headers = null, string urlTemplate = null, string[] additionalLabels = null,
+            params object[] additionalErrorLogObjects)
+        {
+            return SendAsync(url, urlTemplate, metricName, headers, additionalLabels, body,
+                serviceAddress =>
+                    _clientWrapper.PatchAsync<TBody, TResponse>(serviceAddress, metricName, url, body, headers), HttpMethod.Patch);
+        }
+
+        public Task<OperationResult<TResponse>> PatchAsync<TResponse>(string url, string metricName,
+            Dictionary<string, string> headers = null, string urlTemplate = null, string[] additionalLabels = null,
+            params object[] additionalErrorLogObjects)
+        {
+            return SendAsync(url, urlTemplate, metricName, headers, additionalLabels,
+                serviceAddress =>
+                    _clientWrapper.PatchAsync<TResponse>(serviceAddress, metricName, url, headers), HttpMethod.Patch);
+        }
+
+        public Task<OperationResult<string>> PatchAsync<TBody>(string url, TBody body, string metricName,
+            Dictionary<string, string> headers = null, string urlTemplate = null, string[] additionalLabels = null,
+            params object[] additionalErrorLogObjects)
+        {
+            return SendAsync(url, urlTemplate, metricName, headers, additionalLabels, body,
+                serviceAddress =>
+                    _clientWrapper.PatchAsync(serviceAddress, metricName, url, body, headers), HttpMethod.Patch);
+        }
+
+        public Task<OperationResult<string>> PatchAsync(
+            string url, string metricName, Dictionary<string, string> headers = null,
+            string urlTemplate = null, string[] additionalLabels = null,
+            params object[] additionalErrorLogObjects)
+        {
+            return SendAsync(url, urlTemplate, metricName, headers, additionalLabels,
+                serviceAddress =>
+                    _clientWrapper.PatchAsync(serviceAddress, metricName, url, headers), HttpMethod.Patch);
+        }
+
+        #endregion
 
         private async Task<OperationResult<T>> SendAsync<T>(string url,
             string urlTemplate,
