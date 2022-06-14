@@ -1,10 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup Label="Main">
-    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <RuntimeIdentifiers>linux-x64</RuntimeIdentifiers>
     <Authors>Team Services</Authors>
     <Company>ATI</Company>
-    <LangVersion>9</LangVersion>
+    <LangVersion>10</LangVersion>
     <PublishReadyToRun>true</PublishReadyToRun>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <PackageId>atisu.services.consul</PackageId>
@@ -18,7 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="atisu.services.common" Version="8.3.1" />
+    <PackageReference Include="atisu.services.common" Version="9.0.0-rc-8" />
     <PackageReference Include="Consul" Version="0.7.2.6" />
   </ItemGroup>
 </Project>

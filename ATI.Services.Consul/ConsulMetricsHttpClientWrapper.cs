@@ -38,8 +38,9 @@ namespace ATI.Services.Consul
             var config = new TracedHttpClientConfig
             {
                 ServiceName = serviceOptions.ConsulName,
-                Timeout = serviceOptions.TimeOut,
-                ProxyServiceVariablesHeaders = serviceOptions.ProxyServiceVariablesHeaders
+                Timeout = serviceOptions.TimeOut, 
+                HeadersToProxy = serviceOptions.HeadersToProxy,
+                AddCultureToRequest = serviceOptions.AddCultureToRequest
             };
 
             if (serviceOptions.AdditionalHeaders != null)
@@ -72,7 +73,8 @@ namespace ATI.Services.Consul
         {
             return SendAsync(url, urlTemplate, metricName, headers, additionalLabels,
                 serviceAddress =>
-                    _clientWrapper.GetAsync(serviceAddress, metricName, url, headers), HttpMethod.Get, additionalErrorLogObjects);
+                    _clientWrapper.GetAsync(serviceAddress, metricName, url, headers), HttpMethod.Get,
+                additionalErrorLogObjects);
         }
 
         #endregion
@@ -85,7 +87,8 @@ namespace ATI.Services.Consul
         {
             return SendAsync(url, urlTemplate, metricName, headers, additionalLabels, body,
                 serviceAddress =>
-                    _clientWrapper.PostAsync<TBody, TResponse>(serviceAddress, metricName, url, body, headers), HttpMethod.Post,
+                    _clientWrapper.PostAsync<TBody, TResponse>(serviceAddress, metricName, url, body, headers),
+                HttpMethod.Post,
                 additionalErrorLogObjects);
         }
 
@@ -104,7 +107,8 @@ namespace ATI.Services.Consul
         {
             return SendAsync(url, urlTemplate, metricName, headers, additionalLabels, body,
                 serviceAddress =>
-                    _clientWrapper.PostAsync<TResponse>(serviceAddress, metricName, url, body, headers), HttpMethod.Post);
+                    _clientWrapper.PostAsync<TResponse>(serviceAddress, metricName, url, body, headers),
+                HttpMethod.Post);
         }
 
         public Task<OperationResult<string>> PostAsync(string url, string body, string metricName,
@@ -135,7 +139,8 @@ namespace ATI.Services.Consul
         {
             return SendAsync(url, urlTemplate, metricName, headers, additionalLabels, body,
                 serviceAddress =>
-                    _clientWrapper.PutAsync<TBody, TResponse>(serviceAddress, metricName, url, body, headers), HttpMethod.Put);
+                    _clientWrapper.PutAsync<TBody, TResponse>(serviceAddress, metricName, url, body, headers),
+                HttpMethod.Put);
         }
 
         public Task<OperationResult<TResponse>> PutAsync<TResponse>(string url, string metricName,
@@ -170,7 +175,8 @@ namespace ATI.Services.Consul
         {
             return SendAsync(url, urlTemplate, metricName, headers, additionalLabels, body,
                 serviceAddress =>
-                    _clientWrapper.DeleteAsync<TBody, TResponse>(serviceAddress, metricName, url, body, headers), HttpMethod.Delete);
+                    _clientWrapper.DeleteAsync<TBody, TResponse>(serviceAddress, metricName, url, body, headers),
+                HttpMethod.Delete);
         }
 
         public Task<OperationResult<TResponse>> DeleteAsync<TResponse>(string url,
@@ -194,7 +200,7 @@ namespace ATI.Services.Consul
         }
 
         #endregion
-        
+
         #region Patch
 
         public Task<OperationResult<TResponse>> PatchAsync<TBody, TResponse>(string url, TBody body, string metricName,
@@ -203,7 +209,8 @@ namespace ATI.Services.Consul
         {
             return SendAsync(url, urlTemplate, metricName, headers, additionalLabels, body,
                 serviceAddress =>
-                    _clientWrapper.PatchAsync<TBody, TResponse>(serviceAddress, metricName, url, body, headers), HttpMethod.Patch);
+                    _clientWrapper.PatchAsync<TBody, TResponse>(serviceAddress, metricName, url, body, headers),
+                HttpMethod.Patch);
         }
 
         public Task<OperationResult<TResponse>> PatchAsync<TResponse>(string url, string metricName,
@@ -246,7 +253,7 @@ namespace ATI.Services.Consul
             params object[] errorLogObjects)
         {
             using (_metricsTracingFactory.CreateLoggingMetricsTimer(metricName,
-                $"{methodName}:{urlTemplate ?? url}", additionalLabels))
+                       $"{methodName}:{urlTemplate ?? url}", additionalLabels))
             {
                 try
                 {
@@ -272,7 +279,7 @@ namespace ATI.Services.Consul
             params object[] errorLogObjects)
         {
             using (_metricsTracingFactory.CreateLoggingMetricsTimer(metricName,
-                $"{methodName}:{urlTemplate ?? url}", additionalLabels))
+                       $"{methodName}:{urlTemplate ?? url}", additionalLabels))
             {
                 try
                 {
@@ -281,7 +288,7 @@ namespace ATI.Services.Consul
                 }
                 catch (Exception e)
                 {
-                    _logger.ErrorWithObject(e, new {body, additionalLabels});
+                    _logger.ErrorWithObject(e, new { body, additionalLabels });
                     return new OperationResult<T>(ActionStatus.InternalServerError);
                 }
             }
