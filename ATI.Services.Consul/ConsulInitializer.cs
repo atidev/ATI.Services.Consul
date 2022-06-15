@@ -33,5 +33,15 @@ namespace ATI.Services.Consul
 
             _initialized = true;
         }
+
+        public string InitStartConsoleMessage()
+        {
+            return "Start Consul initializer";
+        }
+
+        public string InitEndConsoleMessage()
+        {
+            return $"End Consul initializer, result {_initialized}";
+        }
     }
 }
