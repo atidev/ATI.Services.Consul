@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Net.Http;
+using System.Text.Json;
 using System.Threading.Tasks;
 using ATI.Services.Common.Behaviors;
 using ATI.Services.Common.Logging;
@@ -27,7 +28,8 @@ namespace ATI.Services.Consul
         public ConsulMetricsHttpClientWrapper(
             BaseServiceOptions serviceOptions,
             string adapterName,
-            JsonSerializer serializer = null)
+            JsonSerializerSettings newtonsoftSettings = null,
+            JsonSerializerOptions systemTextJsonOptions = null)
         {
             _metricsTracingFactory = MetricsTracingFactory.CreateHttpClientMetricsFactory(adapterName,
                 serviceOptions.ConsulName, serviceOptions.LongRequestTime);
@@ -35,12 +37,10 @@ namespace ATI.Services.Consul
             _serviceAddress =
                 new ConsulServiceAddress(serviceOptions.ConsulName, serviceOptions.Environment);
 
-            var config = new TracedHttpClientConfig
+            var config = new TracedHttpClientConfig(serviceOptions.ConsulName, serviceOptions.TimeOut, 
+                serviceOptions.SerializerType, serviceOptions.AddCultureToRequest, newtonsoftSettings, systemTextJsonOptions)
             {
-                ServiceName = serviceOptions.ConsulName,
-                Timeout = serviceOptions.TimeOut, 
-                HeadersToProxy = serviceOptions.HeadersToProxy,
-                AddCultureToRequest = serviceOptions.AddCultureToRequest
+                HeadersToProxy = serviceOptions.HeadersToProxy
             };
 
             if (serviceOptions.AdditionalHeaders != null)
@@ -48,9 +48,6 @@ namespace ATI.Services.Consul
                 foreach (var header in serviceOptions.AdditionalHeaders)
                     config.Headers.TryAdd(header.Key, header.Value);
             }
-
-            if (serializer != null)
-                config.Serializer = serializer;
 
             _clientWrapper = new TracingHttpClientWrapper(config);
         }
