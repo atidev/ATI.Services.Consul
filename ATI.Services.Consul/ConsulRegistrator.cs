@@ -20,7 +20,8 @@ namespace ATI.Services.Consul
             foreach (var consulServiceOptions in consulRegistratorOptions.ConsulServiceOptions)
             {
                 consulServiceOptions.Check.HTTP = $"http://localhost:{applicationPort}{consulServiceOptions.Check.HTTP}";
-                await DeregisterFromConsulAsync($"{consulServiceOptions.ServiceName}-{Dns.GetHostName()}-{applicationPort}");
+                await DeregisterFromConsulAsync($"{consulServiceOptions.ServiceName}-{Dns.GetHostName()}-{applicationPort}",
+                    consulRegistratorOptions.ConsulAgentAddress);
             }
 
             _reregistrationTimer = new Timer(async _ => await RegisterServicesAsyncPrivate(consulRegistratorOptions, applicationPort), 
@@ -34,7 +35,7 @@ namespace ATI.Services.Consul
             try
             {
                 foreach (var consulServiceOptions in consulRegistratorOptions.ConsulServiceOptions)
-                    await RegisterToConsulAsync(consulServiceOptions, applicationPort);
+                    await RegisterToConsulAsync(consulServiceOptions, applicationPort, consulRegistratorOptions.ConsulAgentAddress);
             }
             catch (Exception e)
             {
@@ -42,14 +43,18 @@ namespace ATI.Services.Consul
             }
         }
         
-        private static async Task RegisterToConsulAsync(ConsulServiceOptions options, int applicationPort)
+        private static async Task RegisterToConsulAsync(ConsulServiceOptions options, int applicationPort, string consulAgentAddress = null)
         {
             var serviceId = $"{options.ServiceName}-{Dns.GetHostName()}-{applicationPort}";
             RegisteredServices.Add(serviceId);
 
             var swaggerUrls = JsonConvert.SerializeObject(options.SwaggerUrls);
             
-            using var client = new ConsulClient();
+            using var client = new ConsulClient(configuration =>
+            {
+                if (!string.IsNullOrEmpty(consulAgentAddress))
+                    configuration.Address = new Uri(consulAgentAddress);
+            });
             var cr = new AgentServiceRegistration
             {
                 Name = options.ServiceName,
@@ -65,14 +70,14 @@ namespace ATI.Services.Consul
             await client.Agent.ServiceRegister(cr);
         }
 
-        public static async Task DeregisterInstanceAsync()
+        public static async Task DeregisterInstanceAsync(string consulAgentAddress = null)
         {
             await _reregistrationTimer.DisposeAsync();
             try
             {
                 foreach (var serviceId in RegisteredServices)
                 {
-                    await DeregisterFromConsulAsync(serviceId);
+                    await DeregisterFromConsulAsync(serviceId, consulAgentAddress);
                 }
             }
             catch (Exception e)
@@ -81,11 +86,15 @@ namespace ATI.Services.Consul
             }
         }
 
-        private static async Task DeregisterFromConsulAsync(string serviceId)
+        private static async Task DeregisterFromConsulAsync(string serviceId, string consulAgentAddress = null)
         {
             try
             {
-                using var client = new ConsulClient();
+                using var client = new ConsulClient(configuration =>
+                {
+                    if (!string.IsNullOrEmpty(consulAgentAddress))
+                        configuration.Address = new Uri(consulAgentAddress);
+                });
                 await client.Agent.ServiceDeregister(serviceId);
             }
             catch (Exception ex)
@@ -93,7 +102,5 @@ namespace ATI.Services.Consul
                 Logger.Error(ex, $"Не удалось дерегистрировать {serviceId} из консула.");
             }
         }
-
-
     }
 }

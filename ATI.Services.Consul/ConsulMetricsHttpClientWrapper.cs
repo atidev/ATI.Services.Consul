@@ -29,13 +29,14 @@ namespace ATI.Services.Consul
             BaseServiceOptions serviceOptions,
             string adapterName,
             JsonSerializerSettings newtonsoftSettings = null,
-            JsonSerializerOptions systemTextJsonOptions = null)
+            JsonSerializerOptions systemTextJsonOptions = null,
+            string consulAgentAddress = null)
         {
             _metricsTracingFactory = MetricsTracingFactory.CreateHttpClientMetricsFactory(adapterName,
                 serviceOptions.ConsulName, serviceOptions.LongRequestTime);
 
             _serviceAddress =
-                new ConsulServiceAddress(serviceOptions.ConsulName, serviceOptions.Environment);
+                new ConsulServiceAddress(serviceOptions.ConsulName, serviceOptions.Environment, consulAgentAddress: consulAgentAddress);
 
             var config = new TracedHttpClientConfig(serviceOptions.ConsulName, serviceOptions.TimeOut, 
                 serviceOptions.SerializerType, serviceOptions.AddCultureToRequest, newtonsoftSettings, systemTextJsonOptions)

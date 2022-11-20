@@ -18,8 +18,7 @@ namespace ATI.Services.Consul
         private readonly bool _useCaching;
         private readonly string _serviceName;
         private readonly string _environment;
-
-        public ConsulServiceAddressCache(bool useCaching, string serviceName, string environment)
+        public ConsulServiceAddressCache(bool useCaching, string serviceName, string environment, string consulAgentAddress = null)
         {
             _useCaching = useCaching;
             _serviceName = serviceName;
@@ -28,22 +27,22 @@ namespace ATI.Services.Consul
             if (!_useCaching)
                 return;
             
-            _reloadCacheTask = GetServiceFromConsulAsync();
+            _reloadCacheTask = GetServiceFromConsulAsync(consulAgentAddress);
         }
         
         /// <summary>
         /// Возвращает коллекцию сервисов 
         /// </summary>
         /// <returns></returns>
-        public Task<List<ServiceEntry>> GetCachedObjectsAsync()
+        public Task<List<ServiceEntry>> GetCachedObjectsAsync(string consulAgentAddress = null)
         {
-            return _useCaching ? _reloadCacheTask : GetServiceFromConsulAsync();
+            return _useCaching ? _reloadCacheTask : GetServiceFromConsulAsync(consulAgentAddress);
         }
 
         /// <summary>
         /// Запускает таску на обновление кеша, если кеширование включено
         /// </summary>
-        public void ReloadCache()
+        public void ReloadCache(string consulAgentAddress = null)
         {
             if (!_useCaching)
                 return;
@@ -51,19 +50,23 @@ namespace ATI.Services.Consul
             if (!_reloadCacheTask.IsCompleted)
                 return;
             
-            _reloadCacheTask = GetServiceFromConsulAsync();
+            _reloadCacheTask = GetServiceFromConsulAsync(consulAgentAddress);
         }
 
         /// <summary>
         /// Возвращает список живых сервисов
         /// </summary>
         /// <returns></returns>
-        private async Task<List<ServiceEntry>> GetServiceFromConsulAsync()
+        private async Task<List<ServiceEntry>> GetServiceFromConsulAsync(string consulAgentAddress = null)
         {
             try
             {
-                using var cc = new ConsulClient();
-                var fromConsul = await cc.Health.Service(_serviceName, _environment, true);
+                using var client = new ConsulClient(configuration =>
+                {
+                    if (!string.IsNullOrEmpty(consulAgentAddress))
+                        configuration.Address = new Uri(consulAgentAddress);
+                });
+                var fromConsul = await client.Health.Service(_serviceName, _environment, true);
                 if (fromConsul.StatusCode == HttpStatusCode.OK && fromConsul.Response.Length > 0)
                 {
                     return fromConsul.Response.ToList();

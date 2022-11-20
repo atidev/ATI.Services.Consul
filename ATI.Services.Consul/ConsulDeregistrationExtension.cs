@@ -12,14 +12,15 @@ namespace ATI.Services.Consul
         private const string DeregistrationAddress = "_internal/consul/deregister";
 
         public static IEndpointConventionBuilder MapConsulDeregistration(this IEndpointRouteBuilder builder,
-            string deregistrationAddress = null)
+            string deregistrationAddress = null, string consulAgentAddress = null)
         {
-            return builder.MapDelete(deregistrationAddress ?? DeregistrationAddress, DeregisterDelegate);
+            return builder.MapDelete(deregistrationAddress ?? DeregistrationAddress,
+                _ => DeregisterDelegate(consulAgentAddress));
         }
 
-        private static async Task DeregisterDelegate(HttpContext _)
+        private static async Task DeregisterDelegate(string consulAgentAddress = null)
         {
-            await ConsulRegistrator.DeregisterInstanceAsync();
+            await ConsulRegistrator.DeregisterInstanceAsync(consulAgentAddress);
         }
     }
 }

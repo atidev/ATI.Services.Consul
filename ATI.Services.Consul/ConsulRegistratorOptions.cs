@@ -6,6 +6,7 @@ namespace ATI.Services.Consul
     public class ConsulRegistratorOptions
     {
         public string ProvideEnvironment { get; set; }
+        public string ConsulAgentAddress { get; set; }
         public List<ConsulServiceOptions> ConsulServiceOptions { get; set; }
         public TimeSpan ReregistrationPeriod { get; set; } = TimeSpan.FromSeconds(30);
     }

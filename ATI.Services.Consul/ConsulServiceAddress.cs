@@ -13,30 +13,33 @@ namespace ATI.Services.Consul
     {
         private readonly string _environment;
         private readonly string _serviceName;
+        private readonly string _consulAgentAddress;
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
         private readonly Timer _updateCacheTimer;
         private ConsulServiceAddressCache CachedServices { get; }
 
-        public ConsulServiceAddress(string serviceName, string environment, TimeSpan? timeToReload = null, bool useCaching = true)
+        public ConsulServiceAddress(string serviceName, string environment, TimeSpan? timeToReload = null, bool useCaching = true,
+            string consulAgentAddress = null)
         {
             timeToReload ??= TimeSpan.FromSeconds(5);
             _environment = environment;
             _serviceName = serviceName;
+            _consulAgentAddress = consulAgentAddress;
 
-            CachedServices = new ConsulServiceAddressCache(useCaching, _serviceName, _environment);
+            CachedServices = new ConsulServiceAddressCache(useCaching, _serviceName, _environment, _consulAgentAddress);
             
-            _updateCacheTimer = new Timer(_ => CachedServices.ReloadCache(), null, timeToReload.Value,
+            _updateCacheTimer = new Timer(_ => CachedServices.ReloadCache(_consulAgentAddress), null, timeToReload.Value,
                 timeToReload.Value);
         }
 
         public async Task<List<ServiceEntry>> GetAllAsync()
         {
-            return await CachedServices.GetCachedObjectsAsync();
+            return await CachedServices.GetCachedObjectsAsync(_consulAgentAddress);
         }
 
         public async Task<string> ToHttpAsync()
         {
-            var serviceInfo = (await CachedServices.GetCachedObjectsAsync()).RandomItem();
+            var serviceInfo = (await CachedServices.GetCachedObjectsAsync(_consulAgentAddress)).RandomItem();
             var address = string.IsNullOrWhiteSpace(serviceInfo?.Service?.Address)
                 ? serviceInfo?.Node.Address
                 : serviceInfo.Service.Address;
@@ -52,7 +55,7 @@ namespace ATI.Services.Consul
 
         public async Task<(string, int)> GetAddressAndPortAsync()
         {
-            var serviceInfo = (await CachedServices.GetCachedObjectsAsync()).RandomItem();
+            var serviceInfo = (await CachedServices.GetCachedObjectsAsync(_consulAgentAddress)).RandomItem();
             var address = string.IsNullOrWhiteSpace(serviceInfo?.Service?.Address)
                 ? serviceInfo?.Node.Address
                 : serviceInfo.Service.Address;
