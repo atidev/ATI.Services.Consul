@@ -19,7 +19,7 @@ namespace ATI.Services.Consul
         {
             foreach (var consulServiceOptions in consulRegistratorOptions.ConsulServiceOptions)
             {
-                consulServiceOptions.Check.HTTP = $"http://localhost:{applicationPort}{consulServiceOptions.Check.HTTP}";
+                consulServiceOptions.Check.HTTP = $"http://{consulServiceOptions.ServiceDockerName ?? "localhost"}:{applicationPort}{consulServiceOptions.Check.HTTP}";
                 await DeregisterFromConsulAsync($"{consulServiceOptions.ServiceName}-{Dns.GetHostName()}-{applicationPort}",
                     consulRegistratorOptions.ConsulAgentAddress);
             }
@@ -43,7 +43,8 @@ namespace ATI.Services.Consul
             }
         }
         
-        private static async Task RegisterToConsulAsync(ConsulServiceOptions options, int applicationPort, string consulAgentAddress = null)
+        private static async Task RegisterToConsulAsync(ConsulServiceOptions options, int applicationPort,
+            string consulAgentAddress = null)
         {
             var serviceId = $"{options.ServiceName}-{Dns.GetHostName()}-{applicationPort}";
             RegisteredServices.Add(serviceId);
