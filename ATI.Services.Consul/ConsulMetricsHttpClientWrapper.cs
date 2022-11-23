@@ -40,6 +40,7 @@ namespace ATI.Services.Consul
             var config = new TracedHttpClientConfig(serviceOptions.ConsulName, serviceOptions.TimeOut, 
                 serviceOptions.SerializerType, serviceOptions.AddCultureToRequest, newtonsoftSettings, systemTextJsonOptions)
             {
+                LogTimeoutsAsWarn = serviceOptions.LogTimeoutsAsWarn,
                 HeadersToProxy = serviceOptions.HeadersToProxy
             };
 
