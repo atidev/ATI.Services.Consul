@@ -20,6 +20,7 @@ namespace ATI.Services.Consul
     [PublicAPI]
     public class ConsulMetricsHttpClientWrapper
     {
+        private readonly BaseServiceOptions _serviceOptions;
         private readonly TracingHttpClientWrapper _clientWrapper;
         private readonly MetricsTracingFactory _metricsTracingFactory;
         private readonly ConsulServiceAddress _serviceAddress;
@@ -31,8 +32,9 @@ namespace ATI.Services.Consul
             JsonSerializerSettings newtonsoftSettings = null,
             JsonSerializerOptions systemTextJsonOptions = null)
         {
+            _serviceOptions = serviceOptions;
             _metricsTracingFactory = MetricsTracingFactory.CreateHttpClientMetricsFactory(adapterName,
-                serviceOptions.ConsulName, serviceOptions.LongRequestTime);
+                                                                                          serviceOptions.ConsulName, serviceOptions.LongRequestTime);
 
             _serviceAddress =
                 new ConsulServiceAddress(serviceOptions.ConsulName, serviceOptions.Environment);
@@ -40,7 +42,7 @@ namespace ATI.Services.Consul
             var config = new TracedHttpClientConfig(serviceOptions.ConsulName, serviceOptions.TimeOut, 
                 serviceOptions.SerializerType, serviceOptions.AddCultureToRequest, newtonsoftSettings, systemTextJsonOptions)
             {
-                LogTimeoutsAsWarn = serviceOptions.LogTimeoutsAsWarn,
+                LogLevelOverride = serviceOptions.LogLevelOverride,
                 HeadersToProxy = serviceOptions.HeadersToProxy
             };
 
@@ -260,7 +262,9 @@ namespace ATI.Services.Consul
                 }
                 catch (Exception e)
                 {
-                    _logger.ErrorWithObject(e, errorLogObjects);
+                    _logger.LogWithObject(_serviceOptions.LogLevelOverride(LogLevel.Error),
+                                          e,
+                                          logObjects: errorLogObjects);
                     return new OperationResult<T>(ActionStatus.InternalServerError);
                 }
             }
@@ -286,7 +290,9 @@ namespace ATI.Services.Consul
                 }
                 catch (Exception e)
                 {
-                    _logger.ErrorWithObject(e, new { body, additionalLabels });
+                    _logger.LogWithObject(_serviceOptions.LogLevelOverride(LogLevel.Error),
+                                          e,
+                                          logObjects: new { body, additionalLabels });
                     return new OperationResult<T>(ActionStatus.InternalServerError);
                 }
             }
