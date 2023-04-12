@@ -6,8 +6,8 @@ using System.Threading.Tasks;
 using ATI.Services.Common.Behaviors;
 using ATI.Services.Common.Logging;
 using ATI.Services.Common.Metrics;
+using ATI.Services.Common.Metrics.HttpWrapper;
 using ATI.Services.Common.Options;
-using ATI.Services.Common.Tracing;
 using JetBrains.Annotations;
 using Newtonsoft.Json;
 using NLog;
@@ -21,8 +21,8 @@ namespace ATI.Services.Consul
     public class ConsulMetricsHttpClientWrapper
     {
         private readonly BaseServiceOptions _serviceOptions;
-        private readonly TracingHttpClientWrapper _clientWrapper;
-        private readonly MetricsTracingFactory _metricsTracingFactory;
+        private readonly MetricsHttpClientWrapper _clientWrapper;
+        private readonly MetricsFactory _metricsTracingFactory;
         private readonly ConsulServiceAddress _serviceAddress;
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
@@ -33,13 +33,13 @@ namespace ATI.Services.Consul
             JsonSerializerOptions systemTextJsonOptions = null)
         {
             _serviceOptions = serviceOptions;
-            _metricsTracingFactory = MetricsTracingFactory.CreateHttpClientMetricsFactory(adapterName,
+            _metricsTracingFactory = MetricsFactory.CreateHttpClientMetricsFactory(adapterName,
                                                                                           serviceOptions.ConsulName, serviceOptions.LongRequestTime);
 
             _serviceAddress =
                 new ConsulServiceAddress(serviceOptions.ConsulName, serviceOptions.Environment);
 
-            var config = new TracedHttpClientConfig(serviceOptions.ConsulName, serviceOptions.TimeOut, 
+            var config = new MetricsHttpClientConfig(serviceOptions.ConsulName, serviceOptions.TimeOut, 
                 serviceOptions.SerializerType, serviceOptions.AddCultureToRequest, newtonsoftSettings, systemTextJsonOptions)
             {
                 LogLevelOverride = serviceOptions.LogLevelOverride,
@@ -52,7 +52,7 @@ namespace ATI.Services.Consul
                     config.Headers.TryAdd(header.Key, header.Value);
             }
 
-            _clientWrapper = new TracingHttpClientWrapper(config);
+            _clientWrapper = new MetricsHttpClientWrapper(config);
         }
 
         #region Get
