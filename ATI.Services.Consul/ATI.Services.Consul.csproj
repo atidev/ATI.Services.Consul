@@ -18,7 +18,7 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="atisu.services.common" Version="11.4.1-newtonsoft-ver13" />
-    <PackageReference Include="Consul" Version="1.6.10.8" />
+    <PackageReference Include="atisu.services.common" Version="12.3.0-newtonsoft-v13-rc1" />
+    <PackageReference Include="Consul" Version="1.6.10.9" />
   </ItemGroup>
 </Project>
