@@ -1,79 +1,51 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Net;
+using System.Threading;
 using System.Threading.Tasks;
 using Consul;
-using NLog;
 
-namespace ATI.Services.Consul
+namespace ATI.Services.Consul;
+
+/// <summary>
+/// Обеспечивает получение доступных сервисов от консула и их кеширование (опционально)
+/// </summary>
+internal class ConsulServiceAddressCache: IDisposable
 {
-    /// <summary>
-    /// Обеспечивает получение доступных сервисов от консула и их кеширование (опционально)
-    /// </summary>
-    public class ConsulServiceAddressCache
+    private readonly string _serviceName;
+    private readonly string _environment;
+    private List<ServiceEntry> _cachedServices;
+    private readonly Timer _updateCacheTimer;
+    private Task<List<ServiceEntry>> _updateCacheTask;
+    private readonly ConsulAdapter _consulAdapter;
+
+    public ConsulServiceAddressCache(string serviceName, string environment, TimeSpan ttl)
     {
-        private Task<List<ServiceEntry>> _reloadCacheTask;
-        private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
-        private readonly bool _useCaching;
-        private readonly string _serviceName;
-        private readonly string _environment;
-
-        public ConsulServiceAddressCache(bool useCaching, string serviceName, string environment)
-        {
-            _useCaching = useCaching;
-            _serviceName = serviceName;
-            _environment = environment;
-            
-            if (!_useCaching)
-                return;
-            
-            _reloadCacheTask = GetServiceFromConsulAsync();
-        }
+        _serviceName = serviceName;
+        _environment = environment;
+        _consulAdapter = new ConsulAdapter();
+        _updateCacheTimer = new Timer(_ => ReloadCache(), null, ttl, ttl);
+        _cachedServices = _consulAdapter.GetPassingServiceInstancesAsync(serviceName, environment).GetAwaiter().GetResult();
+    }
         
-        /// <summary>
-        /// Возвращает коллекцию сервисов 
-        /// </summary>
-        /// <returns></returns>
-        public Task<List<ServiceEntry>> GetCachedObjectsAsync()
-        {
-            return _useCaching ? _reloadCacheTask : GetServiceFromConsulAsync();
-        }
+    /// <summary>
+    /// Возвращает коллекцию сервисов 
+    /// </summary>
+    /// <returns></returns>
+    public List<ServiceEntry> GetCachedObjectsAsync() => _cachedServices;
 
-        /// <summary>
-        /// Запускает таску на обновление кеша, если кеширование включено
-        /// </summary>
-        public void ReloadCache()
-        {
-            if (!_useCaching)
-                return;
-            
-            if (!_reloadCacheTask.IsCompleted)
-                return;
-            
-            _reloadCacheTask = GetServiceFromConsulAsync();
-        }
+    /// <summary>
+    /// Запускает таску на обновление кеша
+    /// </summary>
+    private void ReloadCache()
+    {
+        if(_updateCacheTask.IsCompleted)
+            _updateCacheTask = _consulAdapter.GetPassingServiceInstancesAsync(_serviceName, _environment);
+        
+        _cachedServices = _updateCacheTask.GetAwaiter().GetResult();
+    }
 
-        /// <summary>
-        /// Возвращает список живых сервисов
-        /// </summary>
-        /// <returns></returns>
-        private async Task<List<ServiceEntry>> GetServiceFromConsulAsync()
-        {
-            try
-            {
-                using var cc = new ConsulClient();
-                var fromConsul = await cc.Health.Service(_serviceName, _environment, true);
-                if (fromConsul.StatusCode == HttpStatusCode.OK && fromConsul.Response.Length > 0)
-                {
-                    return fromConsul.Response.ToList();
-                }
-            }
-            catch (Exception e)
-            {
-                _logger.Error(e);
-            }
-            return new List<ServiceEntry>();
-        }
+    public void Dispose()
+    {
+        _updateCacheTimer.Dispose();
     }
 }

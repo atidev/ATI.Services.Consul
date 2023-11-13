@@ -18,7 +18,7 @@ namespace ATI.Services.Consul
     /// Обертка, включающая в себя ConsulServiceAddress, TracingHttpClientWrapper и MetricsTracingFactory
     /// </summary>
     [PublicAPI]
-    public class ConsulMetricsHttpClientWrapper
+    public class ConsulMetricsHttpClientWrapper : IDisposable
     {
         private readonly BaseServiceOptions _serviceOptions;
         private readonly MetricsHttpClientWrapper _clientWrapper;
@@ -296,6 +296,11 @@ namespace ATI.Services.Consul
                     return new OperationResult<T>(ActionStatus.InternalServerError);
                 }
             }
+        }
+
+        public void Dispose()
+        {
+            _serviceAddress?.Dispose();
         }
     }
 }
