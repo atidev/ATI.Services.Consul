@@ -17,12 +17,12 @@ internal class ConsulAdapter: IDisposable
     /// Возвращает список живых сервисов
     /// </summary>
     /// <returns></returns>
-    public async Task<List<ServiceEntry>> GetPassingServiceInstancesAsync(string serviceName, string environment, bool passingOnly = true, ulong index = 0, TimeSpan? waitTime = null)
+    public async Task<List<ServiceEntry>> GetPassingServiceInstancesAsync(string serviceName, string environment, bool passingOnly = true)
     {
         try
         {
             _consulClient = new ConsulClient();
-            var fromConsul = await _consulClient.Health.Service(serviceName, environment, passingOnly, new QueryOptions { WaitIndex = index, WaitTime = waitTime});
+            var fromConsul = await _consulClient.Health.Service(serviceName, environment, passingOnly);
             if (fromConsul.StatusCode == HttpStatusCode.OK)
             {
                 return fromConsul.Response?.ToList();

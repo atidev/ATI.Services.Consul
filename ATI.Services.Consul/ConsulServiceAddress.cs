@@ -20,7 +20,8 @@ namespace ATI.Services.Consul
         public ConsulServiceAddress(string serviceName,
                                     string environment,
                                     TimeSpan? timeToReload = null,
-                                    bool useCaching = true)
+                                    bool useCaching = true,
+                                    bool passingOnly = true)
         {
             timeToReload ??= TimeSpan.FromSeconds(5);
             _environment = environment;
@@ -28,14 +29,14 @@ namespace ATI.Services.Consul
 
             if (useCaching)
             {
-                _serviceAddressCache = new ConsulServiceAddressCache(_serviceName, _environment, timeToReload.Value);
+                _serviceAddressCache = new ConsulServiceAddressCache(_serviceName, _environment, timeToReload.Value, passingOnly);
                 _getServices = () => Task.FromResult(_serviceAddressCache.GetCachedObjectsAsync());
             }
             else
             {
                 _consulAdapter = new ConsulAdapter();
                 _getServices = async () =>
-                    await _consulAdapter.GetPassingServiceInstancesAsync(serviceName, environment);
+                    await _consulAdapter.GetPassingServiceInstancesAsync(serviceName, environment, passingOnly);
             }
         }
 
