@@ -23,8 +23,9 @@ internal class ConsulServiceAddressCache: IDisposable
         _serviceName = serviceName;
         _environment = environment;
         _consulAdapter = new ConsulAdapter();
+        _updateCacheTask = _consulAdapter.GetPassingServiceInstancesAsync(_serviceName, _environment);
+        _cachedServices = _updateCacheTask.GetAwaiter().GetResult();
         _updateCacheTimer = new Timer(_ => ReloadCache(), null, ttl, ttl);
-        _cachedServices = _consulAdapter.GetPassingServiceInstancesAsync(serviceName, environment).GetAwaiter().GetResult();
     }
         
     /// <summary>
@@ -38,7 +39,7 @@ internal class ConsulServiceAddressCache: IDisposable
     /// </summary>
     private void ReloadCache()
     {
-        if(_updateCacheTask.IsCompleted)
+        if(_updateCacheTask == null || _updateCacheTask.IsCompleted)
             _updateCacheTask = _consulAdapter.GetPassingServiceInstancesAsync(_serviceName, _environment);
         
         _cachedServices = _updateCacheTask.GetAwaiter().GetResult();
