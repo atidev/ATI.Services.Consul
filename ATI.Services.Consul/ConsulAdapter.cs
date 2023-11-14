@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
+using ATI.Services.Common.Metrics;
 using Consul;
 using NLog;
 
@@ -11,7 +12,8 @@ namespace ATI.Services.Consul;
 internal class ConsulAdapter: IDisposable
 {
     private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
-    private ConsulClient _consulClient;
+    private readonly ConsulClient _consulClient = new();
+    private readonly MetricsFactory _metricsFactory = MetricsFactory.CreateExternalHttpMetricsFactory();
 
     /// <summary>
     /// Возвращает список живых сервисов
@@ -19,16 +21,20 @@ internal class ConsulAdapter: IDisposable
     /// <returns></returns>
     public async Task<List<ServiceEntry>> GetPassingServiceInstancesAsync(string serviceName, string environment, bool passingOnly = true)
     {
+        
+            
         try
         {
-            _consulClient = new ConsulClient();
-            var fromConsul = await _consulClient.Health.Service(serviceName, environment, passingOnly);
-            if (fromConsul.StatusCode == HttpStatusCode.OK)
+            using (_metricsFactory.CreateMetricsTimer(nameof(GetPassingServiceInstancesAsync)))
             {
-                return fromConsul.Response?.ToList();
-            }
+                var fromConsul = await _consulClient.Health.Service(serviceName, environment, passingOnly);
+                if (fromConsul.StatusCode == HttpStatusCode.OK)
+                {
+                    return fromConsul.Response?.ToList();
+                }
 
-            _logger.Error($"По запросу в консул {serviceName}:{environment}, вернулся ответ со статусом: {fromConsul.StatusCode}");
+                _logger.Error($"По запросу в консул {serviceName}:{environment}, вернулся ответ со статусом: {fromConsul.StatusCode}");
+            }
         }
         catch (Exception e)
         {
