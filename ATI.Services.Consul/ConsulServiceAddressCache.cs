@@ -30,7 +30,10 @@ internal class ConsulServiceAddressCache: IDisposable
         _consulAdapter = new ConsulAdapter();
         _updateCacheTask = _consulAdapter.GetPassingServiceInstancesAsync(_serviceName, _environment, passingOnly);
         _cachedServices = _updateCacheTask.GetAwaiter().GetResult();
+        
+        #pragma warning disable CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
         _updateCacheTimer = new Timer(_ => ReloadCache(), null, ttl, ttl);
+        #pragma warning restore CS4014 // Because this call is not awaited, execution of the current method continues before the call is completed
     }
         
     /// <summary>
@@ -42,12 +45,12 @@ internal class ConsulServiceAddressCache: IDisposable
     /// <summary>
     /// Запускает таску на обновление кеша
     /// </summary>
-    private void ReloadCache()
+    private async Task ReloadCache()
     {
         if(_updateCacheTask == null || _updateCacheTask.IsCompleted)
             _updateCacheTask = _consulAdapter.GetPassingServiceInstancesAsync(_serviceName, _environment, _passingOnly);
         
-        _cachedServices = _updateCacheTask.GetAwaiter().GetResult();
+        _cachedServices = await _updateCacheTask;
     }
 
     public void Dispose()
