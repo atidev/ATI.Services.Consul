@@ -17,16 +17,17 @@ internal class ConsulAdapter: IDisposable
     private readonly MetricsFactory _metricsFactory = MetricsFactory.CreateHttpClientMetricsFactory(nameof(ConsulAdapter), "consul");
 
     /// <summary>
-    /// Возвращает список живых сервисов
+    /// Возвращает список живых инстансов сервиса
     /// </summary>
     /// <returns></returns>
-    public async Task<OperationResult<List<ServiceEntry>>> GetPassingServiceInstancesAsync(string serviceName,
-                                                                          string environment,
-                                                                          bool passingOnly = true)
+    public async Task<OperationResult<List<ServiceEntry>>> GetPassingServiceInstancesAsync(
+        string serviceName,
+        string environment,
+        bool passingOnly = true)
     {
         try
         {
-            using (_metricsFactory.CreateMetricsTimer(nameof(GetPassingServiceInstancesAsync)))
+            using (_metricsFactory.CreateMetricsTimer("/health/service/:service"))
             {
                 var fromConsul = await _consulClient.Health.Service(serviceName, environment, passingOnly);
                 if (fromConsul.StatusCode == HttpStatusCode.OK)

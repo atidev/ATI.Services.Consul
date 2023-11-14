@@ -60,5 +60,6 @@ internal class ConsulServiceAddressCache: IDisposable
     public void Dispose()
     {
         _updateCacheTimer.Dispose();
+        _consulAdapter.Dispose();
     }
 }
