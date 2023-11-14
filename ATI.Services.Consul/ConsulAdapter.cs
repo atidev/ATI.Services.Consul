@@ -13,7 +13,7 @@ internal class ConsulAdapter: IDisposable
 {
     private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
     private readonly ConsulClient _consulClient = new();
-    private readonly MetricsFactory _metricsFactory = MetricsFactory.CreateExternalHttpMetricsFactory();
+    private readonly MetricsFactory _metricsFactory = MetricsFactory.CreateHttpClientMetricsFactory(nameof(ConsulAdapter), "consul");
 
     /// <summary>
     /// Возвращает список живых сервисов
