@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using ATI.Services.Common.Behaviors;
 using ATI.Services.Common.Extensions;
 using Consul;
 using NLog;
@@ -36,15 +37,17 @@ namespace ATI.Services.Consul
             {
                 _consulAdapter = new ConsulAdapter();
                 _getServices = async () =>
-                    await _consulAdapter.GetPassingServiceInstancesAsync(serviceName, environment, passingOnly);
+                    await _consulAdapter.GetPassingServiceInstancesAsync(serviceName, environment, passingOnly) is var result && result.Success
+                        ? result.Value
+                        : new List<ServiceEntry>();
             }
         }
 
-        public Task<List<ServiceEntry>> GetAllAsync() => _getServices();
+        public async Task<List<ServiceEntry>> GetAllAsync() => await _getServices();
 
         public async Task<string> ToHttpAsync()
         {
-            var serviceInfo = (await _getServices()).RandomItem();
+            var serviceInfo = (await GetAllAsync()).RandomItem();
             var address = string.IsNullOrWhiteSpace(serviceInfo?.Service?.Address)
                               ? serviceInfo?.Node.Address
                               : serviceInfo.Service.Address;
@@ -60,7 +63,7 @@ namespace ATI.Services.Consul
 
         public async Task<(string, int)> GetAddressAndPortAsync()
         {
-            var serviceInfo = (await _getServices()).RandomItem();
+            var serviceInfo = (await GetAllAsync()).RandomItem();
             var address = string.IsNullOrWhiteSpace(serviceInfo?.Service?.Address)
                               ? serviceInfo?.Node.Address
                               : serviceInfo.Service.Address;
