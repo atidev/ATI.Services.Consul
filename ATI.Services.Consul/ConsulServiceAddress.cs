@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ATI.Services.Common.Behaviors;
 using ATI.Services.Common.Extensions;
 using Consul;
 using NLog;

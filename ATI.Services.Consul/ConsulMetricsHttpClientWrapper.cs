@@ -243,6 +243,37 @@ namespace ATI.Services.Consul
 
         #endregion
 
+        #region Send
+
+        public async Task<OperationResult<HttpResponseMessage<TResponse>>> SendAsync<TBody, TResponse>(
+            HttpMethod methodName,
+            string url,
+            TBody body,
+            string metricName,
+            Dictionary<string, string> headers = null,
+            string urlTemplate = null,
+            string[] additionalLabels = null)
+        {
+            using var _ =
+                _metricsTracingFactory.CreateLoggingMetricsTimer(metricName,
+                                                                 $"{methodName}:{urlTemplate ?? url}",
+                                                                 additionalLabels);
+            {
+                try
+                {
+                    var serviceAddress = await _serviceAddress.ToHttpAsync();
+                    return await _clientWrapper.SendAsync<TBody, TResponse>(new Uri(new Uri(serviceAddress),url), metricName, body, headers, methodName);
+                }
+                catch (Exception e)
+                {
+                    _logger.LogWithObject(_serviceOptions.LogLevelOverride(LogLevel.Error), e);
+                    return new(ActionStatus.InternalServerError);
+                }
+            }
+        }
+
+        #endregion
+
         private async Task<OperationResult<T>> SendAsync<T>(string url,
             string urlTemplate,
             string metricName,
