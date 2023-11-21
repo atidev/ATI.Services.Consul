@@ -27,7 +27,7 @@ internal class ConsulAdapter: IDisposable
     {
         try
         {
-            using (_metricsFactory.CreateMetricsTimer("/health/service/:service"))
+            using (_metricsFactory.CreateMetricsTimer("consul", "/health/service/:service"))
             {
                 var fromConsul = await _consulClient.Health.Service(serviceName, environment, passingOnly);
                 if (fromConsul.StatusCode == HttpStatusCode.OK)
