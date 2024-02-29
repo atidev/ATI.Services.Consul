@@ -17,7 +17,7 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="atisu.services.common" Version="13.7.0-group-metrics-rc1.0" />
+    <PackageReference Include="atisu.services.common" Version="13.7.0-group-metrics-rc1.2" />
     <PackageReference Include="Consul" Version="1.6.10.9" />
   </ItemGroup>
 </Project>
