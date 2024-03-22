@@ -43,7 +43,8 @@ namespace ATI.Services.Consul
                 serviceOptions.SerializerType, serviceOptions.AddCultureToRequest, newtonsoftSettings, systemTextJsonOptions)
             {
                 LogLevelOverride = serviceOptions.LogLevelOverride,
-                HeadersToProxy = serviceOptions.HeadersToProxy
+                HeadersToProxy = serviceOptions.HeadersToProxy,
+                UseHttpClientFactory = serviceOptions.UseHttpClientFactory
             };
 
             if (serviceOptions.AdditionalHeaders != null)
