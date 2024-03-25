@@ -8,7 +8,9 @@ using ATI.Services.Common.Logging;
 using ATI.Services.Common.Metrics;
 using ATI.Services.Common.Metrics.HttpWrapper;
 using ATI.Services.Common.Options;
+using ATI.Services.Common.Serializers;
 using JetBrains.Annotations;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using NLog;
 
@@ -22,6 +24,7 @@ namespace ATI.Services.Consul
     {
         private readonly BaseServiceOptions _serviceOptions;
         private readonly MetricsHttpClientWrapper _clientWrapper;
+        private readonly MetricsHttpClientConfig _clientConfig;
         private readonly MetricsFactory _metricsTracingFactory;
         private readonly ConsulServiceAddress _serviceAddress;
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
@@ -30,7 +33,8 @@ namespace ATI.Services.Consul
             BaseServiceOptions serviceOptions,
             string adapterName,
             JsonSerializerSettings newtonsoftSettings = null,
-            JsonSerializerOptions systemTextJsonOptions = null)
+            JsonSerializerOptions systemTextJsonOptions = null,
+            IHttpClientFactory httpClientFactory = null)
         {
             _serviceOptions = serviceOptions;
             _metricsTracingFactory = MetricsFactory.CreateHttpClientMetricsFactory(adapterName,
@@ -39,7 +43,7 @@ namespace ATI.Services.Consul
             _serviceAddress =
                 new ConsulServiceAddress(serviceOptions.ConsulName, serviceOptions.Environment);
 
-            var config = new MetricsHttpClientConfig(serviceOptions.ConsulName, serviceOptions.TimeOut, 
+            _clientConfig = new MetricsHttpClientConfig(serviceOptions.ConsulName, serviceOptions.TimeOut, 
                 serviceOptions.SerializerType, serviceOptions.AddCultureToRequest, newtonsoftSettings, systemTextJsonOptions)
             {
                 LogLevelOverride = serviceOptions.LogLevelOverride,
@@ -50,10 +54,20 @@ namespace ATI.Services.Consul
             if (serviceOptions.AdditionalHeaders != null)
             {
                 foreach (var header in serviceOptions.AdditionalHeaders)
-                    config.Headers.TryAdd(header.Key, header.Value);
+                    _clientConfig.Headers.TryAdd(header.Key, header.Value);
             }
 
-            _clientWrapper = new MetricsHttpClientWrapper(config);
+            _clientWrapper = new MetricsHttpClientWrapper(_clientConfig);
+        }
+
+        public void SetSerializer(JsonSerializerSettings newtonsoftSettings)
+        {
+            _clientConfig.SetSerializer(_serviceOptions.SerializerType, newtonsoftSettings: newtonsoftSettings);
+        }
+        
+        public void SetSerializer(JsonSerializerOptions systemTextJsonOptions)
+        {
+            _clientConfig.SetSerializer(_serviceOptions.SerializerType, systemTextJsonOptions: systemTextJsonOptions);
         }
 
         #region Get
@@ -333,6 +347,20 @@ namespace ATI.Services.Consul
         public void Dispose()
         {
             _serviceAddress?.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Обертка, включающая в себя ConsulServiceAddress, TracingHttpClientWrapper и MetricsTracingFactory
+    /// </summary>
+    [PublicAPI]
+    public class ConsulMetricsHttpClientWrapper<T> : ConsulMetricsHttpClientWrapper
+        where T : BaseServiceOptions
+    {
+        public ConsulMetricsHttpClientWrapper(
+            IOptions<T> serviceOptions,
+            IHttpClientFactory httpClientFactory) : base(serviceOptions.Value, typeof(T).Name, httpClientFactory: httpClientFactory)
+        {
         }
     }
 }
