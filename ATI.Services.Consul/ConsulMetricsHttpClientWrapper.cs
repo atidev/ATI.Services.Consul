@@ -57,7 +57,7 @@ namespace ATI.Services.Consul
                     _clientConfig.Headers.TryAdd(header.Key, header.Value);
             }
 
-            _clientWrapper = new MetricsHttpClientWrapper(_clientConfig);
+            _clientWrapper = new MetricsHttpClientWrapper(_clientConfig, httpClientFactory);
         }
 
         public void SetSerializer(JsonSerializerSettings newtonsoftSettings)
