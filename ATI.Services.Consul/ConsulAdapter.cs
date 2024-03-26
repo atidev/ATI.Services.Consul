@@ -14,7 +14,14 @@ internal class ConsulAdapter: IDisposable
 {
     private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
     private readonly ConsulClient _consulClient = new();
-    private readonly MetricsFactory _metricsFactory = MetricsFactory.CreateHttpClientMetricsFactory(nameof(ConsulAdapter), "consul");
+    private readonly MetricsInstance _metrics;
+
+    public ConsulAdapter(MetricsFactory metricsFactory)
+    {
+        _metrics = metricsFactory.CreateHttpClientMetricsFactory(nameof(ConsulAdapter), "consul");
+    }
+
+    
 
     /// <summary>
     /// Возвращает список живых инстансов сервиса
@@ -27,7 +34,7 @@ internal class ConsulAdapter: IDisposable
     {
         try
         {
-            using (_metricsFactory.CreateMetricsTimer("consul", "/health/service/:service"))
+            using (_metrics.CreateMetricsTimer("consul", "/health/service/:service"))
             {
                 var fromConsul = await _consulClient.Health.Service(serviceName, environment, passingOnly);
                 if (fromConsul.StatusCode == HttpStatusCode.OK)

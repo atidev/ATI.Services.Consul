@@ -17,7 +17,7 @@ using NLog;
 namespace ATI.Services.Consul
 {
     /// <summary>
-    /// Обертка, включающая в себя ConsulServiceAddress, TracingHttpClientWrapper и MetricsTracingFactory
+    /// Обертка, включающая в себя ConsulServiceAddress, MetricsHttpClientWrapper и MetricsTracingFactory
     /// </summary>
     [PublicAPI]
     public class ConsulMetricsHttpClientWrapper : IDisposable
@@ -25,23 +25,24 @@ namespace ATI.Services.Consul
         private readonly BaseServiceOptions _serviceOptions;
         private readonly MetricsHttpClientWrapper _clientWrapper;
         private readonly MetricsHttpClientConfig _clientConfig;
-        private readonly MetricsFactory _metricsTracingFactory;
+        private readonly MetricsInstance _metrics;
         private readonly ConsulServiceAddress _serviceAddress;
         private readonly ILogger _logger = LogManager.GetCurrentClassLogger();
 
         public ConsulMetricsHttpClientWrapper(
             BaseServiceOptions serviceOptions,
             string adapterName,
+            IHttpClientFactory httpClientFactory,
+            MetricsFactory metricsFactory, 
             JsonSerializerSettings newtonsoftSettings = null,
-            JsonSerializerOptions systemTextJsonOptions = null,
-            IHttpClientFactory httpClientFactory = null)
+            JsonSerializerOptions systemTextJsonOptions = null)
         {
             _serviceOptions = serviceOptions;
-            _metricsTracingFactory = MetricsFactory.CreateHttpClientMetricsFactory(adapterName,
+            _metrics = metricsFactory.CreateHttpClientMetricsFactory(adapterName,
                                                                                           serviceOptions.ConsulName, serviceOptions.LongRequestTime);
 
             _serviceAddress =
-                new ConsulServiceAddress(serviceOptions.ConsulName, serviceOptions.Environment);
+                new ConsulServiceAddress(metricsFactory, serviceOptions.ConsulName, serviceOptions.Environment);
 
             _clientConfig = new MetricsHttpClientConfig(serviceOptions.ConsulName, serviceOptions.TimeOut, 
                 serviceOptions.SerializerType, serviceOptions.AddCultureToRequest, newtonsoftSettings, systemTextJsonOptions)
@@ -270,7 +271,7 @@ namespace ATI.Services.Consul
             string[] additionalLabels = null)
         {
             using var _ =
-                _metricsTracingFactory.CreateLoggingMetricsTimer(metricName,
+                _metrics.CreateLoggingMetricsTimer(metricName,
                                                                  $"{methodName}:{urlTemplate ?? url}",
                                                                  additionalLabels);
             {
@@ -298,7 +299,7 @@ namespace ATI.Services.Consul
             HttpMethod methodName,
             params object[] errorLogObjects)
         {
-            using (_metricsTracingFactory.CreateLoggingMetricsTimer(metricName,
+            using (_metrics.CreateLoggingMetricsTimer(metricName,
                        $"{methodName}:{urlTemplate ?? url}", additionalLabels))
             {
                 try
@@ -326,7 +327,7 @@ namespace ATI.Services.Consul
             HttpMethod methodName,
             params object[] errorLogObjects)
         {
-            using (_metricsTracingFactory.CreateLoggingMetricsTimer(metricName,
+            using (_metrics.CreateLoggingMetricsTimer(metricName,
                        $"{methodName}:{urlTemplate ?? url}", additionalLabels))
             {
                 try
@@ -347,11 +348,13 @@ namespace ATI.Services.Consul
         public void Dispose()
         {
             _serviceAddress?.Dispose();
+            _clientWrapper?.Dispose();
         }
     }
 
     /// <summary>
-    /// Обертка, включающая в себя ConsulServiceAddress, TracingHttpClientWrapper и MetricsTracingFactory
+    /// Wrapper which includes ConsulServiceAddress, MetricsHttpClientWrapper and MetricsTracingFactory
+    /// It must be used via DI, add it by .AddConsulMetricsHttpClientWrappers()
     /// </summary>
     [PublicAPI]
     public class ConsulMetricsHttpClientWrapper<T> : ConsulMetricsHttpClientWrapper
@@ -359,7 +362,8 @@ namespace ATI.Services.Consul
     {
         public ConsulMetricsHttpClientWrapper(
             IOptions<T> serviceOptions,
-            IHttpClientFactory httpClientFactory) : base(serviceOptions.Value, typeof(T).Name, httpClientFactory: httpClientFactory)
+            IHttpClientFactory httpClientFactory,
+            MetricsFactory metricsFactory) : base(serviceOptions.Value, serviceOptions.Value.ConsulName, httpClientFactory, metricsFactory)
         {
         }
     }
