@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using ATI.Services.Common.Behaviors;
 using ATI.Services.Common.Extensions;
+using ATI.Services.Common.Metrics;
 using Consul;
 using NLog;
 
@@ -18,11 +18,13 @@ namespace ATI.Services.Consul
         private readonly ConsulServiceAddressCache _serviceAddressCache;
         private readonly ConsulAdapter _consulAdapter;
 
-        public ConsulServiceAddress(string serviceName,
-                                    string environment,
-                                    TimeSpan? timeToReload = null,
-                                    bool useCaching = true,
-                                    bool passingOnly = true)
+        public ConsulServiceAddress(
+            MetricsFactory metricsFactory,
+            string serviceName,
+            string environment,
+            TimeSpan? timeToReload = null,
+            bool useCaching = true,
+            bool passingOnly = true)
         {
             timeToReload ??= TimeSpan.FromSeconds(5);
             _environment = environment;
@@ -30,12 +32,12 @@ namespace ATI.Services.Consul
 
             if (useCaching)
             {
-                _serviceAddressCache = new ConsulServiceAddressCache(_serviceName, _environment, timeToReload.Value, passingOnly);
+                _serviceAddressCache = new ConsulServiceAddressCache(metricsFactory, _serviceName, _environment, timeToReload.Value, passingOnly);
                 _getServices = () => Task.FromResult(_serviceAddressCache.GetCachedObjectsAsync());
             }
             else
             {
-                _consulAdapter = new ConsulAdapter();
+                _consulAdapter = new ConsulAdapter(metricsFactory);
                 _getServices = async () =>
                     await _consulAdapter.GetPassingServiceInstancesAsync(serviceName, environment, passingOnly) is var result && result.Success
                         ? result.Value
@@ -49,8 +51,8 @@ namespace ATI.Services.Consul
         {
             var serviceInfo = (await GetAllAsync()).RandomItem();
             var address = string.IsNullOrWhiteSpace(serviceInfo?.Service?.Address)
-                              ? serviceInfo?.Node.Address
-                              : serviceInfo.Service.Address;
+                ? serviceInfo?.Node.Address
+                : serviceInfo.Service.Address;
 
             if (string.IsNullOrWhiteSpace(address) || serviceInfo.Service == null)
             {
@@ -65,8 +67,8 @@ namespace ATI.Services.Consul
         {
             var serviceInfo = (await GetAllAsync()).RandomItem();
             var address = string.IsNullOrWhiteSpace(serviceInfo?.Service?.Address)
-                              ? serviceInfo?.Node.Address
-                              : serviceInfo.Service.Address;
+                ? serviceInfo?.Node.Address
+                : serviceInfo.Service.Address;
 
             if (string.IsNullOrWhiteSpace(address) || serviceInfo.Service == null)
             {
