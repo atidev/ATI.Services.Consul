@@ -23,7 +23,7 @@ public class HttpConsulHandler : DelegatingHandler
     protected HttpConsulHandler(MetricsFactory metricsFactory, BaseServiceOptions serviceOptions)
     {
         _serviceAddress =
-            new ConsulServiceAddress(metricsFactory, serviceOptions.ServiceName, serviceOptions.Environment);
+            new ConsulServiceAddress(metricsFactory, serviceOptions.ConsulName, serviceOptions.Environment);
     }
 
     protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
