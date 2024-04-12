@@ -46,7 +46,7 @@ public static class ServiceCollectionHttpClientExtensions
     /// <param name="services"></param>
     /// <typeparam name="T"></typeparam>
     /// <returns></returns>s
-    public static IServiceCollection AddConsulHttpClient<T>(this IServiceCollection services, Action<HttpClient> additionalActions) where T : BaseServiceOptions
+    public static IServiceCollection AddConsulHttpClient<T>(this IServiceCollection services) where T : BaseServiceOptions
     {
         var className = typeof(T).Name;
         var settings = ConfigurationManager.GetSection(className).Get<T>();
@@ -65,7 +65,6 @@ public static class ServiceCollectionHttpClientExtensions
                 // We will override this url by consul, but we need to set it, otherwise we will get exception because HttpRequestMessage doesn't have baseUrl (only relative)
                 httpClient.BaseAddress = new Uri("http://localhost");
                 httpClient.SetBaseFields(serviceVariablesOptions.GetServiceAsClientName(), serviceVariablesOptions.GetServiceAsClientHeaderName(),  settings.AdditionalHeaders);
-                additionalActions(httpClient);
             })
             .WithLogging<T>()
             .WithProxyFields<T>()
