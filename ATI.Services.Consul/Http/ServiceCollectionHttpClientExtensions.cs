@@ -50,6 +50,11 @@ public static class ServiceCollectionHttpClientExtensions
     {
         var className = typeof(T).Name;
         var settings = ConfigurationManager.GetSection(className).Get<T>();
+        if (settings == null)
+        {
+            throw new Exception($"Cannot find section for {className}");
+        }
+        
         var logger = LogManager.GetLogger(settings.ServiceName);
         
         if (!settings.UseHttpClientFactory || string.IsNullOrEmpty(settings.ConsulName))
