@@ -42,7 +42,7 @@
 1. `services.AddConsulHttpClient<XServiceOptions>`
 2. `services.AddConsulHttpClients()` - он автоматически соберет из проекта всех наследников `BaseServiceOptions`, где `ConsulName не NULL и UseHttpClientFactory = true` и для них сделает вызов `services.AddConsulHttpClient<>()` 
 
-Методы делают почти все то же самое, что и `services.AddCustomHttpClient<>`, за исключением:
+Методы делают почти все то же самое, что и `services.AddCustomHttpClient<>`, но дополнительно:
 1. Добавляется `ServiceAsClientName` хедер во все запросы
 2. Добавляется `HttpConsulHandler`, который на каждый запрос (retry) получает ip+port инстанса из `ConsulServiceAddress`
 

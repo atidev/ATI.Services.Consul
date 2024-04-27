@@ -1,6 +1,6 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
-using System.Net.Http;
 using ATI.Services.Common.Http.Extensions;
 using ATI.Services.Common.Logging;
 using ATI.Services.Common.Options;
@@ -17,6 +17,8 @@ namespace ATI.Services.Common.Http;
 [PublicAPI]
 public static class ServiceCollectionHttpClientExtensions
 {
+    private static readonly HashSet<string> RegisteredServiceNames = new ();
+
     /// <summary>
     /// Dynamically add all inheritors of BaseServiceOptions as AddConsulHttpClient<T>
     /// </summary>
@@ -54,18 +56,30 @@ public static class ServiceCollectionHttpClientExtensions
         {
             throw new Exception($"Cannot find section for {className}");
         }
+
+        var serviceName = settings.ServiceName;
         
-        var logger = LogManager.GetLogger(settings.ServiceName);
+        var logger = LogManager.GetLogger(serviceName);
         
         if (!settings.UseHttpClientFactory || string.IsNullOrEmpty(settings.ConsulName))
         {
-            logger.WarnWithObject($"Class ${className} has UseHttpClientFactory == false while AddCustomHttpClient");
+            logger.WarnWithObject($"Class ${className} has UseHttpClientFactory == false OR ConsulName == null while AddCustomHttpClient");
+            return services;
+        }
+
+        // Each HttpClient must be added only once, otherwise we will get exceptions like 	System.InvalidOperationException: The 'InnerHandler' property must be null. 'DelegatingHandler' instances provided to 'HttpMessageHandlerBuilder' must not be reused or cached.
+        // Handler: 'ATI.Services.Consul.Http.HttpConsulHandler
+        // Possible reason - because HttpConsulHandler is singleton (not transient)
+        // https://stackoverflow.com/questions/77542613/the-innerhandler-property-must-be-null-delegatinghandler-instances-provided
+        if (RegisteredServiceNames.Contains(serviceName))
+        {
+            logger.WarnWithObject($"Class ${className} is already registered");
             return services;
         }
         
         var serviceVariablesOptions = ConfigurationManager.GetSection(nameof(ServiceVariablesOptions)).Get<ServiceVariablesOptions>();
 
-        services.AddHttpClient(settings.ServiceName, httpClient =>
+        services.AddHttpClient(serviceName, httpClient =>
             {
                 // We will override this url by consul, but we need to set it, otherwise we will get exception because HttpRequestMessage doesn't have baseUrl (only relative)
                 httpClient.BaseAddress = new Uri("http://localhost");
@@ -79,6 +93,8 @@ public static class ServiceCollectionHttpClientExtensions
             .AddHostSpecificCircuitBreakerPolicy(settings, logger)
             .AddTimeoutPolicy(settings.TimeOut)
             .WithMetrics<T>();
+        
+        RegisteredServiceNames.Add(serviceName);
 
         return services;
     }
