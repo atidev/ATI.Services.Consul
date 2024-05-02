@@ -1,10 +1,9 @@
 using System.Threading;
 using ATI.Services.Common.Options;
-using ATI.Services.Consul.Http;
 using JetBrains.Annotations;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace PassportVerification.test;
+namespace ATI.Services.Consul.Http;
 
 [PublicAPI]
 public static class HttpClientBuilderExtensions
@@ -16,7 +15,9 @@ public static class HttpClientBuilderExtensions
 
         return httpClientBuilder
             .AddHttpMessageHandler<HttpConsulHandler<TServiceOptions>>()
-            // infinite handler because we don't want to wait until ConsulServiceAddress will recreated and cache objects every 2 minutes (default)
+            // By default, handlers are alive for 2 minutes
+            // If we don't set InfiniteTimeSpan, every 2 minutes HttpConsulHandler will be recreated
+            // And it will lead to new ConsulServiceAddress instances, which constructor is pretty expensive and will stop http requests for some time
             .SetHandlerLifetime(Timeout.InfiniteTimeSpan);
     }
 

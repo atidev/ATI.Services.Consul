@@ -39,8 +39,7 @@
 ### Http
 
 За основу взята работа с `HttClientFactory` из `atisu.services.common`, но добавлены следующие extensions:
-1. `services.AddConsulHttpClient<XServiceOptions>`
-2. `services.AddConsulHttpClients()` - он автоматически соберет из проекта всех наследников `BaseServiceOptions`, где `ConsulName не NULL и UseHttpClientFactory = true` и для них сделает вызов `services.AddConsulHttpClient<>()` 
+1. `services.AddConsulHttpClient<TAdapter, TServiceOptions>`
 
 Методы делают почти все то же самое, что и `services.AddCustomHttpClient<>`, но дополнительно:
 1. Добавляется `ServiceAsClientName` хедер во все запросы
