@@ -20,6 +20,7 @@ namespace ATI.Services.Consul
     /// Обертка, включающая в себя ConsulServiceAddress, MetricsHttpClientWrapper и MetricsTracingFactory
     /// </summary>
     [PublicAPI]
+    [Obsolete("Use HttpClientFactory instead")]
     public class ConsulMetricsHttpClientWrapper : IDisposable
     {
         private readonly BaseServiceOptions _serviceOptions;
