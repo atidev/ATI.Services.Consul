@@ -13,6 +13,7 @@ public static class ConsulMetricsHttpClientWrapperServiceCollectionExtensions
         // Add IHttpClientFactory for ConsulMetricsHttpClientWrapper<>
         services.AddHttpClient();
         services.AddSingleton(typeof(ConsulMetricsHttpClientWrapper<>));
+        services.AddHttpContextAccessor();
         return services;
     }
 }
