@@ -10,6 +10,7 @@ using ATI.Services.Common.Metrics.HttpWrapper;
 using ATI.Services.Common.Options;
 using ATI.Services.Common.Serializers;
 using JetBrains.Annotations;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using NLog;
@@ -34,7 +35,8 @@ namespace ATI.Services.Consul
             BaseServiceOptions serviceOptions,
             string adapterName,
             IHttpClientFactory httpClientFactory,
-            MetricsFactory metricsFactory, 
+            MetricsFactory metricsFactory,
+            IHttpContextAccessor httpContextAccessor,
             JsonSerializerSettings newtonsoftSettings = null,
             JsonSerializerOptions systemTextJsonOptions = null)
         {
@@ -59,7 +61,7 @@ namespace ATI.Services.Consul
                     _clientConfig.Headers.TryAdd(header.Key, header.Value);
             }
 
-            _clientWrapper = new MetricsHttpClientWrapper(_clientConfig, httpClientFactory);
+            _clientWrapper = new MetricsHttpClientWrapper(_clientConfig, httpClientFactory, httpContextAccessor);
         }
 
         public void SetSerializer(JsonSerializerSettings newtonsoftSettings)
@@ -364,7 +366,8 @@ namespace ATI.Services.Consul
         public ConsulMetricsHttpClientWrapper(
             IOptions<T> serviceOptions,
             IHttpClientFactory httpClientFactory,
-            MetricsFactory metricsFactory) : base(serviceOptions.Value, serviceOptions.Value.ConsulName, httpClientFactory, metricsFactory)
+            MetricsFactory metricsFactory,
+            IHttpContextAccessor httpContextAccessor) : base(serviceOptions.Value, serviceOptions.Value.ConsulName, httpClientFactory, metricsFactory, httpContextAccessor)
         {
         }
     }
