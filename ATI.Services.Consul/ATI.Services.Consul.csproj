@@ -17,7 +17,7 @@
   </PropertyGroup>
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="atisu.services.common" Version="16.9.0-rc3" />
+    <PackageReference Include="atisu.services.common" Version="16.9.0-rc4" />
     <PackageReference Include="Consul" Version="1.6.10.9" />
   </ItemGroup>
 </Project>
