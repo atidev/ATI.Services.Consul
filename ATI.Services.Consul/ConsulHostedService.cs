@@ -1,4 +1,5 @@
-﻿using System.Threading;
+﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using ATI.Services.Common.Behaviors;
 using JetBrains.Annotations;
@@ -21,5 +22,9 @@ public class ConsulHostedService(
         return Task.CompletedTask;
     }
 
-    public Task StopAsync(CancellationToken ct) => registrator.DeregisterInstanceAsync();
+    public Task StopAsync(CancellationToken ct)
+    {
+        Console.WriteLine("ConsulHostedService is stopping.");
+        return registrator.DeregisterInstanceAsync();
+    }
 }
