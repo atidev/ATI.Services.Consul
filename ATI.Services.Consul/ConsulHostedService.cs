@@ -15,11 +15,12 @@ public class ConsulHostedService(
 {
     public Task StartAsync(CancellationToken ct)
     {
-        if (bool.TryParse(ConfigurationManager.AppSettings("ConsulEnabled"), out var enabled) && enabled)
-            return registrator.RegisterServicesAsync(consulRegistratorOptions.Value,
-                                                     ConfigurationManager.GetApplicationPort());
-
-        return Task.CompletedTask;
+        if (!bool.TryParse(ConfigurationManager.AppSettings("ConsulEnabled"), out var enabled) || !enabled)
+            return Task.CompletedTask;
+        
+        Console.WriteLine("ConsulHostedService is starting.");
+        return registrator.RegisterServicesAsync(consulRegistratorOptions.Value,
+                                                 ConfigurationManager.GetApplicationPort());
     }
 
     public Task StopAsync(CancellationToken ct)
