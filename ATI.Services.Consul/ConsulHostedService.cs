@@ -15,7 +15,7 @@ public class ConsulHostedService(
 {
     public Task StartAsync(CancellationToken ct)
     {
-        if (!bool.TryParse(ConfigurationManager.AppSettings("ConsulEnabled"), out var enabled) || !enabled)
+        if (bool.TryParse(ConfigurationManager.AppSettings("ConsulEnabled"), out var enabled) && !enabled)
             return Task.CompletedTask;
         
         Console.WriteLine("ConsulHostedService is starting.");
