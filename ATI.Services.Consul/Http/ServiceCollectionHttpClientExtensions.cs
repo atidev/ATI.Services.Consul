@@ -62,4 +62,47 @@ public static class ServiceCollectionHttpClientExtensions
 
         return services;
     }
+    
+    public static IServiceCollection AddConsulHttpClient<TIAdapter, TAdapter, TServiceOptions>(this IServiceCollection services) 
+        where TAdapter : class, TIAdapter
+        where TIAdapter : class
+        where TServiceOptions : BaseServiceOptions
+    {
+        var className = typeof(TServiceOptions).Name;
+        var settings = ConfigurationManager.GetSection(className).Get<TServiceOptions>();
+        if (settings == null)
+        {
+            throw new Exception($"Cannot find section for {className}");
+        }
+        
+        if (string.IsNullOrEmpty(settings.ConsulName))
+        {
+            throw new Exception($"Class {className} has ConsulName == null while AddConsulHttpClient");
+        }
+
+        var serviceName = settings.ServiceName;
+        var logger = LogManager.GetLogger(serviceName);
+
+        var serviceVariablesOptions = ConfigurationManager.GetSection(nameof(ServiceVariablesOptions)).Get<ServiceVariablesOptions>();
+
+        services.AddHttpClient<TIAdapter, TAdapter>(httpClient =>
+            {
+                // We will override this url by consul, but we need to set it, otherwise we will get exception because HttpRequestMessage doesn't have baseUrl (only relative)
+                httpClient.BaseAddress = new Uri("http://localhost");
+                httpClient.SetBaseFields(serviceVariablesOptions.GetServiceAsClientName(), serviceVariablesOptions.GetServiceAsClientHeaderName(),  settings.AdditionalHeaders);
+            })
+            .WithLogging<TServiceOptions>()
+            .WithProxyFields<TServiceOptions>()
+            .AddRetryPolicy(settings, logger)
+            // Get new instance url for each retry (because 1 instance can be down)
+            .WithConsul<TServiceOptions>()
+            .AddHostSpecificCircuitBreakerPolicy(settings, logger)
+            .AddTimeoutPolicy(settings.TimeOut)
+            .WithMetrics<TServiceOptions>();
+        // we don't override PooledConnectionLifetime even we use HttpClient in static TAdapter
+        // because we are getting new host from consul for each request
+        // https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/http/httpclient-guidelines
+
+        return services;
+    }
 }
