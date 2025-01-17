@@ -25,6 +25,46 @@ public static class ServiceCollectionHttpClientExtensions
         where TAdapter : class
         where TServiceOptions : BaseServiceOptions
     {
+        var settings = GetSettings<TServiceOptions>();
+
+        var serviceVariablesOptions = ConfigurationManager.GetSection(nameof(ServiceVariablesOptions)).Get<ServiceVariablesOptions>();
+
+        services.AddHttpClient<TAdapter>(httpClient =>
+            {
+                // We will override this url by consul, but we need to set it, otherwise we will get exception because HttpRequestMessage doesn't have baseUrl (only relative)
+                httpClient.BaseAddress = new Uri("http://localhost");
+                httpClient.SetBaseFields(serviceVariablesOptions.GetServiceAsClientName(),
+                    serviceVariablesOptions.GetServiceAsClientHeaderName(), settings.AdditionalHeaders);
+            })
+            .AddDefaultHandlers(settings);
+
+        return services;
+    }
+    
+    public static IServiceCollection AddConsulHttpClient<TAdapterInterface, TAdapter, TServiceOptions>(this IServiceCollection services) 
+        where TAdapter : class, TAdapterInterface
+        where TAdapterInterface : class
+        where TServiceOptions : BaseServiceOptions
+    {
+        var settings = GetSettings<TServiceOptions>();
+
+        var serviceVariablesOptions = ConfigurationManager.GetSection(nameof(ServiceVariablesOptions)).Get<ServiceVariablesOptions>();
+
+        services.AddHttpClient<TAdapterInterface, TAdapter>(httpClient =>
+            {
+                // We will override this url by consul, but we need to set it, otherwise we will get exception because HttpRequestMessage doesn't have baseUrl (only relative)
+                httpClient.BaseAddress = new Uri("http://localhost");
+                httpClient.SetBaseFields(serviceVariablesOptions.GetServiceAsClientName(),
+                    serviceVariablesOptions.GetServiceAsClientHeaderName(), settings.AdditionalHeaders);
+            })
+            .AddDefaultHandlers(settings);
+
+        return services;
+    }
+
+    private static TServiceOptions GetSettings<TServiceOptions>()
+        where TServiceOptions : BaseServiceOptions
+    {
         var className = typeof(TServiceOptions).Name;
         var settings = ConfigurationManager.GetSection(className).Get<TServiceOptions>();
         if (settings == null)
@@ -37,17 +77,15 @@ public static class ServiceCollectionHttpClientExtensions
             throw new Exception($"Class {className} has ConsulName == null while AddConsulHttpClient");
         }
 
-        var serviceName = settings.ServiceName;
-        var logger = LogManager.GetLogger(serviceName);
+        return settings;
+    }
 
-        var serviceVariablesOptions = ConfigurationManager.GetSection(nameof(ServiceVariablesOptions)).Get<ServiceVariablesOptions>();
-
-        services.AddHttpClient<TAdapter>(httpClient =>
-            {
-                // We will override this url by consul, but we need to set it, otherwise we will get exception because HttpRequestMessage doesn't have baseUrl (only relative)
-                httpClient.BaseAddress = new Uri("http://localhost");
-                httpClient.SetBaseFields(serviceVariablesOptions.GetServiceAsClientName(), serviceVariablesOptions.GetServiceAsClientHeaderName(),  settings.AdditionalHeaders);
-            })
+    private static IHttpClientBuilder AddDefaultHandlers<TServiceOptions>(this IHttpClientBuilder builder, TServiceOptions settings)
+    where TServiceOptions : BaseServiceOptions
+    {
+        var logger = LogManager.GetLogger(settings.ServiceName);
+        
+        return builder
             .WithLogging<TServiceOptions>()
             .WithProxyFields<TServiceOptions>()
             .AddRetryPolicy(settings, logger)
@@ -59,7 +97,5 @@ public static class ServiceCollectionHttpClientExtensions
         // we don't override PooledConnectionLifetime even we use HttpClient in static TAdapter
         // because we are getting new host from consul for each request
         // https://learn.microsoft.com/en-us/dotnet/fundamentals/networking/http/httpclient-guidelines
-
-        return services;
     }
 }
