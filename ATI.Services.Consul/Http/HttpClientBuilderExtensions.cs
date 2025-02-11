@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using ATI.Services.Common.Options;
 using JetBrains.Annotations;
@@ -8,7 +9,12 @@ namespace ATI.Services.Consul.Http;
 [PublicAPI]
 public static class HttpClientBuilderExtensions
 {
-    public static IHttpClientBuilder WithConsul<TServiceOptions>(this IHttpClientBuilder httpClientBuilder)
+    public static IHttpClientBuilder WithAddressHandler<TServiceOptions>(this IHttpClientBuilder builder,
+        Func<IHttpClientBuilder, IHttpClientBuilder> configure) => configure(builder);
+
+    public static IHttpClientBuilder WithK8S(IHttpClientBuilder httpClientBuilder) => httpClientBuilder;
+
+    public static IHttpClientBuilder WithConsul<TServiceOptions>(IHttpClientBuilder httpClientBuilder)
         where TServiceOptions : BaseServiceOptions
     {
         httpClientBuilder.Services.AddSingleton<HttpConsulHandler<TServiceOptions>>();
